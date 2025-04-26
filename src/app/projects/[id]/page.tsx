@@ -6,6 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { projectsApi } from '@/services/api'
 import { getErrorMessage } from '@/utils/errorHandler'
+import LoadingScreen from '@/components/LoadingScreen';
 
 // Định nghĩa kiểu dữ liệu cho các phần tử hiển thị
 type ProjectItem = {
@@ -37,6 +38,31 @@ const ProjectDetail = () => {
   const [projectName, setProjectName] = useState(`Project ${id}`)
   const [currentIndex, setCurrentIndex] = useState(0)
   const sliderRef = useRef<HTMLDivElement>(null)
+
+  // Add CSS to body to control scroll behavior 
+  useEffect(() => {
+    // Add CSS rule to the head to ensure wheel events work correctly
+    const style = document.createElement('style');
+    style.textContent = `
+      body.horizontal-scroll {
+        overflow-x: hidden;
+        overflow-y: hidden;
+      }
+      .horizontal-scroll-container {
+        scroll-behavior: smooth;
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Add class to body
+    document.body.classList.add('horizontal-scroll');
+
+    // Clean up when component unmounts
+    return () => {
+      document.body.classList.remove('horizontal-scroll');
+      document.head.removeChild(style);
+    };
+  }, []);
 
   // Add state to track if auto-scroll should be permanently disabled
   const [autoScrollDisabled, setAutoScrollDisabled] = useState(false);
@@ -205,7 +231,7 @@ const ProjectDetail = () => {
 
       // Only auto-scroll on desktop
       if (window.innerWidth >= 768) {
-        // Đảm bảy animation frame trước đó nếu có
+        // Đảm bả animation frame trước đó nếu có
         if (scrollAnimationRef.current) {
           cancelAnimationFrame(scrollAnimationRef.current);
         }
@@ -263,83 +289,44 @@ const ProjectDetail = () => {
           // Sort descriptions by position_display
           const sortedDescriptions = [...projectData.descriptions].sort((a, b) => a.position_display - b.position_display);
 
-          // Add descriptions and images in alternating pattern
-          sortedDescriptions.forEach((desc, index) => {
-            // Add description
+          // Get the highest position value from descriptions
+          const maxPosition = Math.max(...sortedDescriptions.map(desc => desc.position_display));
+          
+          // Limit the total number of images to be less than maxPosition
+          const limitedImages = projectImages.slice(0, maxPosition - 1);
+          
+          // Add descriptions and images in alternating pattern based on position_display
+          let imageIndex = 0;
+          sortedDescriptions.forEach((desc) => {
+            // Add description at its specific position
             items.push({
               type: 'description',
               content: desc.content,
-              order: index * 2 + 1 // Odd numbers for descriptions
+              order: desc.position_display
             });
-
-            // Add image if available
-            if (projectImages[index]) {
+            
+            // Add images between this description and the next one
+            const nextDescPos = sortedDescriptions.find(d => d.position_display > desc.position_display)?.position_display || Number.MAX_SAFE_INTEGER;
+            const imagesToAdd = nextDescPos - desc.position_display - 1;
+            
+            for (let i = 0; i < imagesToAdd && imageIndex < limitedImages.length; i++) {
               items.push({
                 type: 'image',
-                content: projectImages[index],
-                order: index * 2 + 2 // Even numbers for images
+                content: limitedImages[imageIndex],
+                order: desc.position_display + i + 1
               });
+              imageIndex++;
             }
           });
-
-          // Add remaining images
-          for (let i = sortedDescriptions.length; i < projectImages.length; i++) {
+        } else {
+          // If no descriptions, only display up to 10 images
+          const maxImages = Math.min(projectImages.length, 10);
+          for (let i = 0; i < maxImages; i++) {
             items.push({
               type: 'image',
               content: projectImages[i],
-              order: sortedDescriptions.length * 2 + i + 1
+              order: i + 1
             });
-          }
-        } else {
-          // Fallback to default content pattern if no descriptions
-          if (id === '1') {
-            // Content for Project 1
-            items.push(
-              {
-                type: 'description',
-                content: '✨ Huy and Thanh\'s wedding day was a beautiful celebration of love and commitment. Their ceremony was filled with heartfelt moments, surrounded by family and friends who came to witness their special day.',
-                order: 1
-              },
-              { type: 'image', content: projectImages[0] || '', order: 2 },
-              { type: 'image', content: projectImages[1] || '', order: 3 },
-              {
-                type: 'description',
-                content: '💚 Every detail of their wedding reflected their personalities and the journey they\'ve shared together. From the emotional exchange of vows to the joyful celebration afterward, it was a day filled with love and happiness.',
-                order: 4
-              },
-              { type: 'image', content: projectImages[2] || '', order: 5 },
-              { type: 'image', content: projectImages[3] || '', order: 6 },
-              { type: 'image', content: projectImages[4] || '', order: 7 },
-              {
-                type: 'description',
-                content: 'The wedding film of Huy and Thanh captures all these beautiful moments. Check out the link below to watch their full wedding video ❤️',
-                order: 8
-              }
-            );
-          } else {
-            // Content for Project 2
-            items.push(
-              {
-                type: 'description',
-                content: '✨ For Trinh and Minh, love is not just about emotions; it\'s a daily choice and a commitment to stand by each other for a lifetime. This garden shone brilliantly during their intimate wedding ceremony, bathed in the warm glow of the sunset and surrounded by family and loved ones.',
-                order: 1
-              },
-              { type: 'image', content: projectImages[0] || '', order: 2 },
-              { type: 'image', content: projectImages[1] || '', order: 3 },
-              {
-                type: 'description',
-                content: '💚 Everything, from the moment Trinh walked down the aisle, Minh gently wiping away his tears, to the exchange of vows, heartfelt wishes from their parents, and the song Trinh sang to Minh, contributed to a beautiful and sweet afternoon.',
-                order: 4
-              },
-              { type: 'image', content: projectImages[2] || '', order: 5 },
-              { type: 'image', content: projectImages[3] || '', order: 6 },
-              { type: 'image', content: projectImages[4] || '', order: 7 },
-              {
-                type: 'description',
-                content: 'The wedding film of Trinh and Minh is officially out now, and we couldn\'t be more excited to share their beautiful love story with you! Check out the link below to watch the full wedding video ❤️',
-                order: 8
-              }
-            );
           }
         }
 
@@ -436,30 +423,78 @@ const ProjectDetail = () => {
     }
   }, [projectImages.length]);
 
+  // Add wheel event listener to convert vertical scroll to horizontal scroll
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      // Only modify scroll behavior in desktop view
+      if (!sliderRef.current || window.innerWidth < 768) return;
+      
+      // Always prevent the default vertical scroll
+      e.preventDefault();
+      
+      // Determine scroll amount - support both deltaY and deltaX for different browser behaviors
+      const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+      
+      // Use smoother scrolling with smaller increments
+      const scrollMultiplier = 0.5; // Reduce this value for smoother scrolling
+      const scrollAmount = delta * scrollMultiplier;
+      
+      // Use smooth scrolling with requestAnimationFrame for better performance
+      let startTime: number | null = null;
+      const animateScroll = (timestamp: number) => {
+        if (!startTime) startTime = timestamp;
+        const elapsed = timestamp - startTime;
+        
+        // Complete animation in 100ms for a smooth feel
+        const duration = 100;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Use easing function for smoother acceleration/deceleration
+        const easeOutQuad = (t: number) => t * (2 - t);
+        const easedProgress = easeOutQuad(progress);
+        
+        if (sliderRef.current) {
+          sliderRef.current.scrollLeft += scrollAmount * easedProgress;
+        }
+        
+        if (progress < 1) {
+          requestAnimationFrame(animateScroll);
+        }
+      };
+      
+      requestAnimationFrame(animateScroll);
+    };
+    
+    // Add wheel event listener to document for broader capture
+    document.addEventListener('wheel', handleWheel, { passive: false });
+    
+    return () => {
+      document.removeEventListener('wheel', handleWheel);
+    };
+  }, []);
+
   // Add loading progress state
   const [loadingProgress, setLoadingProgress] = useState(0)
 
   // Update the loading UI
   if (loading) {
     return (
-      <div className="flex h-screen w-full flex-col items-center justify-center bg-white text-black">
-        <div className="text-center px-4">
-          <h1 className="mb-6 animate-fade-in-delayed text-4xl md:text-6xl font-bold opacity-0">
-            Loading Project
-            <br />
-            {projectName}
-          </h1>
-        </div>
-        <div className="absolute bottom-8 left-8 font-mono text-lg md:text-2xl">{Math.floor(loadingProgress)}%</div>
-      </div>
-    )
+      <LoadingScreen 
+        onComplete={() => {
+          setLoading(false);
+          setTimeout(() => {
+            // Có thể thêm các hiệu ứng fade-in nếu cần
+          }, 300);
+        }}
+      />
+    );
   }
 
   // Component để hiển thị description
   const DescriptionBlock = ({ content }: { content: string }) => (
     <div className="w-full py-8 px-4 md:px-16">
       <div 
-        className="text-black text-xl md:text-2xl font-medium max-w-3xl mx-auto"
+        className="text-black text-xl md:text-2xl font-medium max-w-3xl mx-auto font-mon-cheri"
         dangerouslySetInnerHTML={{ __html: content }}
       />
     </div>
@@ -525,7 +560,7 @@ const ProjectDetail = () => {
         {/* Desktop view - horizontal scroll */}
         <div
           ref={sliderRef}
-          className="hidden md:flex md:overflow-x-auto h-[calc(100vh-120px)] w-full px-4 md:gap-16 pt-[25px] pt-[25px] pb-[25px] md:overflow-y-hidden"
+          className="hidden md:flex md:overflow-x-auto h-[calc(100vh-120px)] w-full px-4 md:gap-16 pt-[25px] pt-[25px] pb-[25px] md:overflow-y-hidden md:scrollbar-hide md:horizontal-scroll-container"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {/* Project title */}
@@ -551,16 +586,15 @@ const ProjectDetail = () => {
                   />
                 </div>
               );
-            } else if (item.type === 'video' as 'image' | 'description' | 'video') {
+            } else if (item.type === 'video') {
               return (
                 <div
                   key={`video-${index}`}
                   className="h-full flex-shrink-0 relative flex items-center justify-center"
                 >
-                  <div className="w-[560px] h-[315px]">
+                  <div className="w-[960px] aspect-video"> {/* 16:9 = 960x540 */}
                     <iframe
-                      width="560"
-                      height="315"
+                      className="w-full h-full"
                       src={item.content}
                       title="YouTube video player"
                       frameBorder="0"
@@ -587,10 +621,9 @@ const ProjectDetail = () => {
             }
           })}
           <div className="h-full flex-shrink-0 relative flex items-center justify-center">
-            <div className="w-full h-full">
+            <div className="w-[960px] aspect-video"> {/* 16:9 = 960x540 */}
               <iframe
-                width="1000"
-                height="100%"
+                className="w-full h-full"
                 src="//www.youtube.com/embed/9u-1TKRSkBk"
                 title="YouTube video player"
                 frameBorder="0"

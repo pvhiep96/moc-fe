@@ -220,8 +220,8 @@ export default function Home() {
           const player = videoPlayersRef.current[projectId];
           // Resume from saved timestamp if available
           const timestamp = videoTimestamps.current[projectId] || 0;
-          player.currentTime = timestamp;
-          player.play();
+          player.seekTo(timestamp);
+          player.playVideo();
         } catch (e) {
           console.error('Failed to play video:', e);
         }
@@ -281,13 +281,15 @@ export default function Home() {
       {/* Header with logo */}
       <header className="fixed top-0 left-0 w-full z-50 p-4 md:p-6">
         <Link href="/" className="z-50">
-          <Image 
+          <Image
             src="/moc_nguyen_production_black.png"
             alt="MOC Production Logo"
             width={120}
             height={40}
             className="h-[50px] md:h-[80px] w-auto object-contain"
             priority
+            quality={100}
+            unoptimized={true}
           />
         </Link>
       </header>

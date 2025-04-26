@@ -9,7 +9,13 @@
     "lint": "next lint",
     "check-env": "node scripts/check-env.js",
     "dev:with-env": "npm run check-env && next dev",
-    "build:with-env": "npm run check-env && next build"
+    "build:with-env": "npm run check-env && next build",
+    "docker:build": "docker-compose build",
+    "docker:start": "docker-compose up -d",
+    "docker:stop": "docker-compose down",
+    "docker:dev": "docker-compose -f docker-compose.dev.yml up",
+    "docker:logs": "docker-compose logs -f",
+    "docker:shell": "docker-compose exec frontend sh"
   },
   "dependencies": {
     "@types/js-cookie": "^3.0.6",

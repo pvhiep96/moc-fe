@@ -1,0 +1,201 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Append these custom styles for our homepage */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.panel-container {
+  transition: all 0.7s ease-in-out;
+}
+
+.panel-container:hover {
+  transform: scale(1.02);
+  z-index: 5;
+}
+
+.panel-overlay {
+  transition: all 0.5s ease;
+}
+
+.panel-container:hover .panel-overlay {
+  opacity: 0.2;
+}
+
+.panel-content {
+  transition: all 0.5s ease;
+  opacity: 0.9;
+}
+
+.panel-container:hover .panel-content {
+  transform: translateY(-10px);
+  opacity: 1;
+}
+
+.menu-rotate {
+  writing-mode: vertical-lr;
+  text-orientation: mixed;
+  transition: all 0.5s ease;
+}
+
+.menu-rotate:hover {
+  transform: translateX(-5px);
+  letter-spacing: 2px;
+}
+
+.logo-image {
+  transition: all 0.5s ease;
+}
+
+.logo-image:hover {
+  transform: scale(1.05);
+}
+
+.fade-in {
+  animation: fadeIn 1.5s ease-in-out;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.projects-grid {
+  display: grid;
+}
+
+.projects-grid > div {
+  animation: fadeUp 0.8s ease-out forwards;
+  opacity: 0;
+}
+
+.projects-grid > div:nth-child(1) { animation-delay: 0.1s; }
+.projects-grid > div:nth-child(2) { animation-delay: 0.2s; }
+.projects-grid > div:nth-child(3) { animation-delay: 0.3s; }
+.projects-grid > div:nth-child(4) { animation-delay: 0.4s; }
+.projects-grid > div:nth-child(5) { animation-delay: 0.5s; }
+.projects-grid > div:nth-child(6) { animation-delay: 0.6s; }
+.projects-grid > div:nth-child(7) { animation-delay: 0.7s; }
+.projects-grid > div:nth-child(8) { animation-delay: 0.8s; }
+.projects-grid > div:nth-child(9) { animation-delay: 0.9s; }
+
+.project-image {
+  transition: all 0.6s ease;
+  overflow: hidden;
+}
+
+.project-card:hover .project-image {
+  transform: scale(1.05);
+}
+
+/* Add these styles at the end of your CSS file */
+
+.project-card {
+  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.project-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+  border-radius: 0.5rem;
+}
+
+.project-card:hover {
+  transform: translateY(-5px);
+}
+
+.project-card:hover::after {
+  opacity: 1;
+}
+
+.section-title {
+  position: relative;
+  display: inline-block;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  background-color: white;
+  transition: width 0.3s ease;
+}
+
+.section-title:hover::after {
+  width: 100%;
+}
+
+/* Add these styles at the end of your CSS file */
+
+.opacity-0 {
+  opacity: 0;
+}
+
+.opacity-100 {
+  opacity: 1;
+}
+
+.transition-opacity {
+  transition: opacity 0.5s ease-in-out;
+}
+
+/* Loading animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.loading-animation {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+/* Add a smoother fade-in for the content after loading */
+.content-fade-in {
+  animation: fadeIn 0.8s ease-in-out;
+  transition: opacity 0.5s ease-in-out;
+}

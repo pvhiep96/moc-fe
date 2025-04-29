@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useParams } from 'next/navigation'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { projectsApi } from '@/services/api'
@@ -36,10 +36,11 @@ const ProjectDetail = () => {
   const [projectItems, setProjectItems] = useState<ProjectItem[]>([])
   const [loading, setLoading] = useState(true)
   const [projectName, setProjectName] = useState(`Project ${id}`)
-  const [currentIndex, setCurrentIndex] = useState(0)
   const sliderRef = useRef<HTMLDivElement>(null)
+  const imageRefs = useRef<(HTMLDivElement | null)[]>([])
+  const [currentIndex, setCurrentIndex] = useState(1);
 
-  // Add CSS to body to control scroll behavior 
+  // Add CSS to body to control scroll behavior
   useEffect(() => {
     // Add CSS rule to the head to ensure wheel events work correctly
     const style = document.createElement('style');
@@ -101,8 +102,11 @@ const ProjectDetail = () => {
       }, 3000);
     };
 
-    // Add scroll event handler to detect all types of scrolling
-    const handleScroll = () => {
+    // Unified scroll handler that will handle both auto-scroll control and index calculation
+    const handleUnifiedScroll = () => {
+      console.log('Unified handleScroll called');
+
+      // Part 1: Auto-scroll control (from first handleScroll)
       // Immediately stop auto-scroll when user manually scrolls
       setIsMouseIdle(false);
 
@@ -117,6 +121,7 @@ const ProjectDetail = () => {
         }
       }
 
+      // Reset inactivity timer
       if (mouseTimerRef.current) {
         clearTimeout(mouseTimerRef.current);
       }
@@ -148,14 +153,26 @@ const ProjectDetail = () => {
     window.addEventListener('click', handleMouseMove);
     window.addEventListener('touchstart', handleMouseMove);
     window.addEventListener('wheel', handleWheel);
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleUnifiedScroll);
     window.addEventListener('touchmove', handleTouchMove);
 
     // Add event listener to the slider element specifically for both desktop and mobile
     if (sliderRef.current) {
-      sliderRef.current.addEventListener('scroll', handleScroll);
-      sliderRef.current.addEventListener('wheel', handleWheel);
-      sliderRef.current.addEventListener('touchmove', handleTouchMove);
+      console.log('Adding unified scroll event listener to slider');
+
+      // Sử dụng passive: false để đảm bảo sự kiện không bị bỏ qua
+      sliderRef.current.addEventListener('scroll', handleUnifiedScroll, { passive: false });
+      sliderRef.current.addEventListener('wheel', handleWheel, { passive: false });
+      sliderRef.current.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+      // Thêm sự kiện gesturechange cho touchpad trên macOS
+      sliderRef.current.addEventListener('gesturechange', handleUnifiedScroll, { passive: false });
+
+      // Thêm sự kiện mousewheel cho các trình duyệt cũ hơn
+      sliderRef.current.addEventListener('mousewheel' as keyof HTMLElementEventMap, handleUnifiedScroll as EventListener, { passive: false });
+
+      // Thêm sự kiện DOMMouseScroll cho Firefox
+      sliderRef.current.addEventListener('DOMMouseScroll' as keyof HTMLElementEventMap, handleUnifiedScroll as EventListener, { passive: false });
 
       // Add keyboard navigation detection
       sliderRef.current.addEventListener('keydown', (e) => {
@@ -170,14 +187,17 @@ const ProjectDetail = () => {
       window.removeEventListener('click', handleMouseMove);
       window.removeEventListener('touchstart', handleMouseMove);
       window.removeEventListener('wheel', handleWheel);
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('scroll', handleUnifiedScroll);
       window.removeEventListener('touchmove', handleTouchMove);
 
       // Clean up slider scroll event
       if (sliderRef.current) {
-        sliderRef.current.removeEventListener('scroll', handleScroll);
+        sliderRef.current.removeEventListener('scroll', handleUnifiedScroll);
         sliderRef.current.removeEventListener('wheel', handleWheel);
         sliderRef.current.removeEventListener('touchmove', handleTouchMove);
+        sliderRef.current.removeEventListener('gesturechange', handleUnifiedScroll);
+        sliderRef.current.removeEventListener('mousewheel' as keyof HTMLElementEventMap, handleUnifiedScroll as EventListener);
+        sliderRef.current.removeEventListener('DOMMouseScroll' as keyof HTMLElementEventMap, handleUnifiedScroll as EventListener);
         sliderRef.current.removeEventListener('keydown', handleMouseMove);
       }
 
@@ -254,17 +274,6 @@ const ProjectDetail = () => {
 
     // Set loading state at the beginning
     setLoading(true)
-    setLoadingProgress(0)
-
-    // Start loading progress animation
-    const progressInterval = setInterval(() => {
-      setLoadingProgress(prev => {
-        if (prev >= 90) {
-          return 90; // Stay at 90% until images are actually loaded
-        }
-        return Math.floor(prev + 1);
-      });
-    }, 30);
 
     const loadData = async () => {
       try {
@@ -291,10 +300,10 @@ const ProjectDetail = () => {
 
           // Get the highest position value from descriptions
           const maxPosition = Math.max(...sortedDescriptions.map(desc => desc.position_display));
-          
+
           // Limit the total number of images to be less than maxPosition
           const limitedImages = projectImages.slice(0, maxPosition - 1);
-          
+
           // Add descriptions and images in alternating pattern based on position_display
           let imageIndex = 0;
           sortedDescriptions.forEach((desc) => {
@@ -304,11 +313,11 @@ const ProjectDetail = () => {
               content: desc.content,
               order: desc.position_display
             });
-            
+
             // Add images between this description and the next one
             const nextDescPos = sortedDescriptions.find(d => d.position_display > desc.position_display)?.position_display || Number.MAX_SAFE_INTEGER;
             const imagesToAdd = nextDescPos - desc.position_display - 1;
-            
+
             for (let i = 0; i < imagesToAdd && imageIndex < limitedImages.length; i++) {
               items.push({
                 type: 'image',
@@ -334,11 +343,12 @@ const ProjectDetail = () => {
         if (projectData.video_urls && projectData.video_urls.length > 0) {
           const videoUrl = projectData.video_urls[0].url;
           const videoId = getYouTubeId(videoUrl);
+
           if (videoId) {
             items.push({
               type: 'video',
               content: `//www.youtube.com/embed/${videoId}`,
-              order: 1000 // Always at the end
+              order: items.length + 1 // Add video at the end
             });
           }
         }
@@ -347,30 +357,18 @@ const ProjectDetail = () => {
         items.sort((a, b) => a.order - b.order);
         setProjectItems(items);
 
-        // Complete the loading progress
-        setLoadingProgress(100);
-
         // Short delay before removing loading screen
         setTimeout(() => {
           setLoading(false);
         }, 500);
-
-        // Clear the progress interval
-        clearInterval(progressInterval);
       } catch (error) {
         console.error('Error loading project data:', error);
-        clearInterval(progressInterval);
-        setLoadingProgress(100);
         setTimeout(() => setLoading(false), 500);
       }
     }
 
     // Start loading data
     loadData();
-
-    return () => {
-      clearInterval(progressInterval);
-    };
   }, [id])
 
   // Helper function to extract YouTube video ID
@@ -382,104 +380,171 @@ const ProjectDetail = () => {
     return (match && match[2] && match[2].length === 11) ? match[2] : '';
   };
 
-  // Add scroll event listener to track current image
+
+  // Effect to update counter based on scroll position - more responsive version
   useEffect(() => {
-    const handleScroll = () => {
+    if (!sliderRef.current) return;
+
+    // Sử dụng requestAnimationFrame để đảm bảo hiệu ứng mượt mà
+    const updateCounterAnimation = () => {
+      // Chỉ cập nhật hiệu ứng animation, không cập nhật giá trị currentIndex
+      // vì giá trị này sẽ được cập nhật bởi IntersectionObserver
+      const counter = document.getElementById('image-counter');
+      if (counter) {
+        // Scale up slightly and reduce opacity during transition
+        counter.style.transform = 'scale(1.05)';
+        counter.style.opacity = '0.9';
+
+        // Reset animation after a very short delay
+        setTimeout(() => {
+          counter.style.transform = 'scale(1)';
+          counter.style.opacity = '1';
+        }, 100);
+      }
+    };
+
+    // Sử dụng một cách tiếp cận trực tiếp hơn để phát hiện ảnh hiện tại
+    console.log('Setting up image detection logic');
+
+    // Hàm để tính toán ảnh hiện tại dựa trên vị trí cuộn - phiên bản cải tiến
+    const calculateCurrentImage = () => {
+      console.log('Calculating current image - improved version');
       if (!sliderRef.current) return;
 
-      const scrollLeft = sliderRef.current.scrollLeft;
-      const containerWidth = sliderRef.current.clientWidth;
+      // Lấy thông tin về container
+      const container = sliderRef.current;
+      const containerRect = container.getBoundingClientRect();
+      const containerCenter = containerRect.left + containerRect.width / 2;
 
-      // Calculate image width based on responsive sizes
-      let imageWidth = containerWidth * 0.8; // Mobile default
-      if (window.innerWidth >= 1024) {
-        imageWidth = containerWidth * 0.4; // Desktop
-      } else if (window.innerWidth >= 768) {
-        imageWidth = containerWidth * 0.6; // Tablet
+      console.log(`Container center: ${containerCenter}px, width: ${containerRect.width}px`);
+
+      // Biến để theo dõi ảnh gần nhất với trung tâm
+      let closestImage: HTMLDivElement | null = null;
+      let closestDistance = Infinity;
+      let closestOrder = 1;
+      let debugInfo: Array<{
+        order: number;
+        distance: string;
+        visible: boolean;
+        left: string;
+        right: string;
+        center: string;
+      }> = [];
+
+      // Kiểm tra tất cả các ảnh
+      imageRefs.current.forEach((ref) => {
+        if (!ref) return;
+
+        // Lấy thông tin về ảnh
+        const imageRect = ref.getBoundingClientRect();
+        const imageCenter = imageRect.left + imageRect.width / 2;
+
+        // Tính khoảng cách từ trung tâm ảnh đến trung tâm container
+        const distance = Math.abs(imageCenter - containerCenter);
+
+        // Kiểm tra xem ảnh có phần nào nằm trong viewport không
+        const isVisible =
+          imageRect.left < containerRect.right &&
+          imageRect.right > containerRect.left;
+
+        // Lấy order từ data attribute
+        const orderAttr = ref.getAttribute('data-order');
+        if (!orderAttr) return;
+        const orderNum = parseInt(orderAttr);
+
+        // Thu thập thông tin debug
+        debugInfo.push({
+          order: orderNum,
+          distance: distance.toFixed(2),
+          visible: isVisible,
+          left: imageRect.left.toFixed(2),
+          right: imageRect.right.toFixed(2),
+          center: imageCenter.toFixed(2)
+        });
+
+        // Nếu ảnh có phần nào đó hiển thị và gần trung tâm hơn ảnh hiện tại
+        if (isVisible && distance < closestDistance) {
+          closestDistance = distance;
+          closestImage = ref;
+          closestOrder = orderNum;
+        }
+      });
+
+      // Log thông tin debug
+      console.table(debugInfo);
+
+      // Nếu tìm thấy ảnh gần nhất
+      if (closestImage) {
+        console.log(`Closest image: ${closestOrder}, distance: ${closestDistance.toFixed(2)}px`);
+
+        // Luôn cập nhật chỉ số để đảm bảo nó luôn phản ánh ảnh hiện tại
+        if (closestOrder !== currentIndex) {
+          console.log(`Updating index from ${currentIndex} to ${closestOrder}`);
+          setCurrentIndex(closestOrder);
+
+          // Thêm hiệu ứng animation cho counter
+          const counter = document.getElementById('image-counter');
+          if (counter) {
+            counter.style.transform = 'scale(1.05)';
+            counter.style.opacity = '0.9';
+
+            setTimeout(() => {
+              counter.style.transform = 'scale(1)';
+              counter.style.opacity = '1';
+            }, 100);
+          }
+        }
       }
-
-      // Account for the gap (8 * 4 = 32px) and first slide (project name)
-      const gapWidth = 32;
-      const firstSlideWidth = imageWidth + gapWidth;
-      const adjustedScroll = scrollLeft - firstSlideWidth;
-
-      // Calculate current index (0 is project name, 1+ are images)
-      let index = 0;
-      if (adjustedScroll > 0) {
-        index = Math.round(adjustedScroll / (imageWidth + gapWidth)) + 1;
-      } else if (scrollLeft > imageWidth / 2) {
-        index = 1;
-      }
-
-      // Clamp index to valid range
-      index = Math.max(0, Math.min(index, projectImages.length));
-      setCurrentIndex(index);
     };
 
-    const slider = sliderRef.current;
-    if (slider) {
-      slider.addEventListener('scroll', handleScroll);
-      return () => slider.removeEventListener('scroll', handleScroll);
-    }
-  }, [projectImages.length]);
+    // Không cần hàm handleImageDetection nữa vì đã xử lý trong handleScroll
 
-  // Add wheel event listener to convert vertical scroll to horizontal scroll
-  useEffect(() => {
-    const handleWheel = (e: WheelEvent) => {
-      // Only modify scroll behavior in desktop view
-      if (!sliderRef.current || window.innerWidth < 768) return;
-      
-      // Always prevent the default vertical scroll
-      e.preventDefault();
-      
-      // Determine scroll amount - support both deltaY and deltaX for different browser behaviors
-      const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-      
-      // Use smoother scrolling with smaller increments
-      const scrollMultiplier = 0.5; // Reduce this value for smoother scrolling
-      const scrollAmount = delta * scrollMultiplier;
-      
-      // Use smooth scrolling with requestAnimationFrame for better performance
-      let startTime: number | null = null;
-      const animateScroll = (timestamp: number) => {
-        if (!startTime) startTime = timestamp;
-        const elapsed = timestamp - startTime;
-        
-        // Complete animation in 100ms for a smooth feel
-        const duration = 100;
-        const progress = Math.min(elapsed / duration, 1);
-        
-        // Use easing function for smoother acceleration/deceleration
-        const easeOutQuad = (t: number) => t * (2 - t);
-        const easedProgress = easeOutQuad(progress);
-        
-        if (sliderRef.current) {
-          sliderRef.current.scrollLeft += scrollAmount * easedProgress;
-        }
-        
-        if (progress < 1) {
-          requestAnimationFrame(animateScroll);
-        }
-      };
-      
-      requestAnimationFrame(animateScroll);
+    // Đăng ký sự kiện scroll để cập nhật hiệu ứng animation và tính toán ảnh hiện tại
+    const handleScroll = () => {
+      // Cập nhật hiệu ứng animation
+      requestAnimationFrame(updateCounterAnimation);
+
+      // Tính toán ảnh hiện tại
+      requestAnimationFrame(calculateCurrentImage);
     };
-    
-    // Add wheel event listener to document for broader capture
-    document.addEventListener('wheel', handleWheel, { passive: false });
-    
+
+    // Đăng ký nhiều sự kiện để đảm bảo phát hiện mọi thay đổi
+    sliderRef.current.addEventListener('scroll', handleScroll, { passive: true });
+    sliderRef.current.addEventListener('wheel', handleScroll, { passive: true });
+    sliderRef.current.addEventListener('touchmove', handleScroll, { passive: true });
+
+    // Thêm sự kiện resize để xử lý khi kích thước màn hình thay đổi
+    window.addEventListener('resize', handleScroll, { passive: true });
+
+    // Thiết lập interval để kiểm tra định kỳ (đề phòng các sự kiện khác không được kích hoạt)
+    const checkInterval = setInterval(handleScroll, 500);
+
+    // Initial calculation and animation
+    calculateCurrentImage();
+    updateCounterAnimation();
+
     return () => {
-      document.removeEventListener('wheel', handleWheel);
-    };
-  }, []);
+      // Xóa tất cả các event listener
+      if (sliderRef.current) {
+        sliderRef.current.removeEventListener('scroll', handleScroll);
+        sliderRef.current.removeEventListener('wheel', handleScroll);
+        sliderRef.current.removeEventListener('touchmove', handleScroll);
+      }
 
-  // Add loading progress state
-  const [loadingProgress, setLoadingProgress] = useState(0)
+      // Xóa event listener trên window
+      window.removeEventListener('resize', handleScroll);
+
+      // Xóa interval
+      clearInterval(checkInterval);
+
+      console.log('Cleaned up all event listeners and intervals');
+    };
+  }, [projectItems, currentIndex]);
 
   // Update the loading UI
   if (loading) {
     return (
-      <LoadingScreen 
+      <LoadingScreen
         onComplete={() => {
           setLoading(false);
           setTimeout(() => {
@@ -493,7 +558,7 @@ const ProjectDetail = () => {
   // Component để hiển thị description
   const DescriptionBlock = ({ content }: { content: string }) => (
     <div className="w-full py-8 px-4 md:px-16">
-      <div 
+      <div
         className="text-black text-xl md:text-2xl font-medium max-w-3xl mx-auto font-mon-cheri"
         dangerouslySetInnerHTML={{ __html: content }}
       />
@@ -539,21 +604,25 @@ const ProjectDetail = () => {
         <div className="hidden md:block">
           <Link
             href="/"
-            className="px-2 py-4 text-2xl font-bold text-black transition-colors duration-500"
-            style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', letterSpacing: '0.1em', textShadow: '0px 0px 3px rgba(0,0,0,0.3)' }}
+            className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-black hover:text-gray-600 transition-all duration-300"
           >
-            BACK
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="transform rotate-180 group-hover:-translate-x-1 transition-transform duration-300">
+              <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span className="uppercase tracking-wider">Back to Projects</span>
           </Link>
         </div>
       </header>
 
-      {/* Remove the old logo positions */}
       {/* Nút Back sticky phía dưới bên phải cho mobile */}
       <Link
         href="/moc-productions"
-        className="md:hidden fixed bottom-4 right-4 px-4 py-2 text-xl font-bold z-50 bg-white/80 backdrop-blur-sm rounded-full text-black"
+        className="md:hidden fixed bottom-4 right-4 flex items-center gap-2 px-4 py-2 text-sm font-medium z-50 bg-white/90 backdrop-blur-sm rounded-full text-black shadow-md"
       >
-        BACK
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="transform rotate-180">
+          <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        <span className="uppercase tracking-wider">Back</span>
       </Link>
 
       <main className="h-screen pt-[80px] md:pt-[120px]">
@@ -580,7 +649,7 @@ const ProjectDetail = () => {
                   key={`desc-${index}`}
                   className="h-full flex-shrink-0 relative flex items-center justify-center"
                 >
-                  <div 
+                  <div
                     className="max-w-md text-xl md:text-2xl font-medium text-black"
                     dangerouslySetInnerHTML={{ __html: item.content }}
                   />
@@ -592,7 +661,7 @@ const ProjectDetail = () => {
                   key={`video-${index}`}
                   className="h-full flex-shrink-0 relative flex items-center justify-center"
                 >
-                  <div className="w-[960px] aspect-video"> {/* 16:9 = 960x540 */}
+                  <div className="w-[960px] aspect-video">
                     <iframe
                       className="w-full h-full"
                       src={item.content}
@@ -606,33 +675,32 @@ const ProjectDetail = () => {
                 </div>
               );
             } else {
+              // Calculate image order (skip descriptions and videos)
+              const imageOrder = projectItems
+                .slice(0, index)
+                .filter(item => item.type === 'image')
+                .length + 1;
+
               return (
                 <div
                   key={`img-${index}`}
+                  ref={(el) => {
+                    if (el) {
+                      imageRefs.current[index] = el;
+                    }
+                  }}
+                  data-order={imageOrder}
                   className="h-full flex-shrink-0 relative flex items-center justify-center"
                 >
                   <img
                     src={item.content}
-                    alt={`Project item ${index + 1}`}
+                    alt={`Project item ${imageOrder}`}
                     className="max-h-full max-w-full object-contain"
                   />
                 </div>
               );
             }
           })}
-          <div className="h-full flex-shrink-0 relative flex items-center justify-center">
-            <div className="w-[960px] aspect-video"> {/* 16:9 = 960x540 */}
-              <iframe
-                className="w-full h-full"
-                src="//www.youtube.com/embed/9u-1TKRSkBk"
-                title="YouTube video player"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerPolicy="strict-origin-when-cross-origin"
-                allowFullScreen
-              ></iframe>
-            </div>
-          </div>
         </div>
 
         {/* Mobile view - 1 item mỗi hàng với chiều cao nguyên bản */}
@@ -682,27 +750,28 @@ const ProjectDetail = () => {
               }
             })}
           </div>
-          <div className="w-full">
-            <div className="aspect-video w-full">
-              <iframe
-                width="100%"
-                height="100%"
-                src="//www.youtube.com/embed/9u-1TKRSkBk"
-                title="YouTube video player"
-                frameBorder="0"
-                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerPolicy="strict-origin-when-cross-origin"
-                allowFullScreen
-                className="shadow-lg"
-              ></iframe>
-            </div>
-          </div>
         </div>
 
         {/* Scroll indicator - only visible on desktop */}
         <div className="fixed bottom-4 right-4 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-full text-sm text-black hidden md:block">
           <span className="hidden md:inline">Scroll to view more</span>
           <span className="ml-2 hidden md:inline-block md:animate-bounce">→</span>
+        </div>
+
+        <div
+          className="hidden md:flex fixed bottom-8 left-8 z-50 bg-white text-black px-4 py-2 rounded-full font-medium transition-all duration-300 ease-in-out items-center shadow-md"
+          style={{
+            transform: currentIndex > 1 ? 'scale(1)' : 'scale(0.95)',
+            opacity: currentIndex > 1 ? 1 : 0.7,
+            pointerEvents: 'none' // Để không cản trở việc click vào các phần tử phía dưới
+          }}
+        >
+          <span className="text-3xl font-light transition-all duration-300" id="image-counter">
+            {currentIndex}
+          </span>
+          <span className="text-sm ml-1 self-end mb-1 opacity-60">
+            /{projectItems.filter(item => item.type === 'image').length}
+          </span>
         </div>
       </main>
     </div>

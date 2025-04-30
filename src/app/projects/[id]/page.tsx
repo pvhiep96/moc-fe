@@ -45,12 +45,27 @@ const ProjectDetail = () => {
     // Add CSS rule to the head to ensure wheel events work correctly
     const style = document.createElement('style');
     style.textContent = `
-      body.horizontal-scroll {
-        overflow-x: hidden;
-        overflow-y: hidden;
+      @media (min-width: 768px) {
+        body.horizontal-scroll {
+          overflow-x: hidden;
+          overflow-y: hidden;
+          overscroll-behavior-y: none;
+        }
+        .horizontal-scroll-container {
+          scroll-behavior: smooth;
+          overscroll-behavior-y: none;
+          overscroll-behavior-x: auto;
+          touch-action: pan-x;
+        }
       }
-      .horizontal-scroll-container {
-        scroll-behavior: smooth;
+      @media (max-width: 767px) {
+        body.horizontal-scroll {
+          overflow-x: hidden;
+          overflow-y: auto;
+        }
+        .horizontal-scroll-container {
+          scroll-behavior: smooth;
+        }
       }
     `;
     document.head.appendChild(style);
@@ -58,10 +73,119 @@ const ProjectDetail = () => {
     // Add class to body
     document.body.classList.add('horizontal-scroll');
 
+    // Thêm event listener cho wheel ở cấp độ window để xử lý cuộn ngang
+    // Đây là cách tiếp cận khác để xử lý sự kiện wheel
+    const handleWindowWheel = (e: WheelEvent) => {
+      // Chỉ xử lý trên desktop và khi slider đã được tạo
+      if (window.innerWidth >= 768 && sliderRef.current) {
+        // Kiểm tra xem sự kiện có xảy ra trong slider không
+        const sliderRect = sliderRef.current.getBoundingClientRect();
+        const isInSlider =
+          e.clientX >= sliderRect.left &&
+          e.clientX <= sliderRect.right &&
+          e.clientY >= sliderRect.top &&
+          e.clientY <= sliderRect.bottom;
+
+        if (isInSlider) {
+          // Ngăn chặn cuộn dọc mặc định
+          e.preventDefault();
+
+          // Chuyển đổi cuộn dọc thành cuộn ngang
+          sliderRef.current.scrollLeft += e.deltaY * 1.5;
+
+          // Cập nhật counter - không thể gọi calculateCurrentImage ở đây vì nó chưa được định nghĩa
+          // Thay vào đó, chúng ta sẽ cập nhật counter trực tiếp
+          if (sliderRef.current) {
+            // Lấy thông tin về container
+            const containerRect = sliderRef.current.getBoundingClientRect();
+
+            // Lấy tất cả các phần tử có data-order và data-countable="true" (chỉ ảnh)
+            const itemElements = sliderRef.current.querySelectorAll('[data-order][data-countable="true"]');
+            let maxVisibleOrder = 0;
+            let closestOrder = currentIndex;
+
+            itemElements.forEach(el => {
+              const rect = el.getBoundingClientRect();
+
+              // Tính phần hiển thị của ảnh
+              const itemWidth = rect.width;
+              const rightEdgeOfScreen = containerRect.right;
+              const leftEdgeOfScreen = containerRect.left;
+              const leftEdgeOfItem = rect.left;
+              const rightEdgeOfItem = rect.right;
+
+              const visibleLeft = Math.max(leftEdgeOfItem, leftEdgeOfScreen);
+              const visibleRight = Math.min(rightEdgeOfItem, rightEdgeOfScreen);
+              const visibleWidth = Math.max(0, visibleRight - visibleLeft);
+              const visiblePercent = visibleWidth / itemWidth;
+
+              // Ảnh phải hiển thị ít nhất 30% mới được tính
+              const visibleThreshold = 0.3; // 30%
+              const isVisible = visiblePercent >= visibleThreshold;
+
+              // Lấy order từ data attribute
+              const orderAttr = el.getAttribute('data-order');
+              if (!orderAttr) return;
+              const orderNum = parseInt(orderAttr);
+
+              // Nếu ảnh hiển thị và có số thứ tự lớn hơn số hiện tại
+              if (isVisible && orderNum > maxVisibleOrder) {
+                console.log(`Item ${orderNum} is visible (${(visiblePercent * 100).toFixed(1)}%) - new max order`);
+                maxVisibleOrder = orderNum;
+              }
+            });
+
+            // Nếu tìm thấy ảnh hiển thị, cập nhật số đếm
+            if (maxVisibleOrder > 0) {
+              closestOrder = maxVisibleOrder;
+            }
+
+            // Cập nhật counter với hiệu ứng mượt mà - sử dụng debounce để tránh cập nhật quá thường xuyên
+            if (closestOrder !== currentIndex) {
+              // Sử dụng debounce để tránh cập nhật quá thường xuyên
+              const updateCounter = debounce(() => {
+                // Thêm hiệu ứng animation mượt mà cho counter
+                const counter = document.getElementById('image-counter');
+                if (counter) {
+                  // Hiệu ứng fade out
+                  counter.style.opacity = '0';
+                  counter.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
+
+                  // Đợi hiệu ứng hoàn thành rồi mới cập nhật số
+                  setTimeout(() => {
+                    // Cập nhật số
+                    setCurrentIndex(closestOrder);
+
+                    // Đợi một chút để đảm bảo DOM đã cập nhật
+                    setTimeout(() => {
+                      // Hiệu ứng fade in
+                      counter.style.opacity = '1';
+                    }, 50);
+                  }, 300);
+                } else {
+                  // Nếu không tìm thấy counter, vẫn cập nhật số
+                  setCurrentIndex(closestOrder);
+                }
+              }, 200); // 200ms debounce
+
+              // Gọi hàm đã được debounce
+              updateCounter();
+            }
+          }
+        }
+      }
+    };
+
+    // Đăng ký event listener ở cấp độ window với passive: false
+    window.addEventListener('wheel', handleWindowWheel, { passive: false });
+
     // Clean up when component unmounts
     return () => {
       document.body.classList.remove('horizontal-scroll');
       document.head.removeChild(style);
+
+      // Xóa event listener ở cấp độ window
+      window.removeEventListener('wheel', handleWindowWheel);
     };
   }, []);
 
@@ -89,8 +213,21 @@ const ProjectDetail = () => {
       }, 3000);
     };
 
-    // Add wheel event handler to stop auto-scroll when user scrolls
-    const handleWheel = () => {
+    // Add wheel event handler to convert vertical scroll to horizontal scroll
+    const handleWheel = (e: WheelEvent) => {
+      // Chỉ ngăn chặn hành vi cuộn mặc định trên desktop
+      if (window.innerWidth >= 768) {
+        e.preventDefault();
+
+        // Chuyển đổi cuộn dọc thành cuộn ngang
+        if (sliderRef.current) {
+          // Sử dụng deltaY của wheel event để cuộn ngang
+          // Nhân với 1.5 để tăng tốc độ cuộn
+          sliderRef.current.scrollLeft += e.deltaY * 1.5;
+        }
+      }
+
+      // Dừng auto-scroll khi người dùng cuộn
       setIsMouseIdle(false);
 
       if (mouseTimerRef.current) {
@@ -230,7 +367,6 @@ const ProjectDetail = () => {
 
         // Calculate how far to scroll based on elapsed time
         const scrollProgress = elapsed / scrollDuration;
-        const scrollDistance = maxScroll * scrollProgress;
 
         // Apply easing for smoother motion
         const easeInOutQuad = (t: number) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
@@ -339,18 +475,44 @@ const ProjectDetail = () => {
           }
         }
 
-        // Add video if available
-        if (projectData.video_urls && projectData.video_urls.length > 0) {
-          const videoUrl = projectData.video_urls[0].url;
-          const videoId = getYouTubeId(videoUrl);
+        // Lưu trữ tạm thời các video để thêm vào cuối
+        const videoItems: ProjectItem[] = [];
 
-          if (videoId) {
-            items.push({
-              type: 'video',
-              content: `//www.youtube.com/embed/${videoId}`,
-              order: items.length + 1 // Add video at the end
-            });
-          }
+        // Add videos if available - improved version
+        if (projectData.video_urls && projectData.video_urls.length > 0) {
+          // Process all videos from the API
+          projectData.video_urls.forEach((videoItem: { url: string }) => {
+            // Extract video ID directly if it's already an ID, or from a full URL
+            const videoId = videoItem.url.includes('youtube.com') || videoItem.url.includes('youtu.be')
+              ? getYouTubeId(videoItem.url)
+              : videoItem.url; // Assume it's already an ID if not a URL
+
+            if (videoId) {
+              // Add the video to temporary array
+              videoItems.push({
+                type: 'video',
+                content: `https://www.youtube.com/embed/${videoId}?rel=0&showinfo=0&autoplay=0`,
+                order: 0 // Temporary order, will be updated later
+              });
+
+              console.log(`Added video ${videoId} to be placed at the end`);
+            }
+          });
+        }
+
+        // Sort items by order first
+        items.sort((a, b) => a.order - b.order);
+
+        // Now add videos at the end with sequential order numbers
+        if (videoItems.length > 0) {
+          // Start order from the last item's order + 1
+          let startOrder = items.length > 0 ? items[items.length - 1].order + 1 : 1;
+
+          videoItems.forEach((videoItem, index) => {
+            videoItem.order = startOrder + index;
+            items.push(videoItem);
+            console.log(`Placed video at the end with order ${videoItem.order}`);
+          });
         }
 
         // Sort by order
@@ -381,6 +543,19 @@ const ProjectDetail = () => {
   };
 
 
+  // Hàm debounce để tránh cập nhật quá thường xuyên
+  const debounce = (func: Function, wait: number) => {
+    let timeout: NodeJS.Timeout | null = null;
+
+    return (...args: any[]) => {
+      if (timeout) clearTimeout(timeout);
+
+      timeout = setTimeout(() => {
+        func(...args);
+      }, wait);
+    };
+  };
+
   // Effect to update counter based on scroll position - more responsive version
   useEffect(() => {
     if (!sliderRef.current) return;
@@ -406,118 +581,305 @@ const ProjectDetail = () => {
     // Sử dụng một cách tiếp cận trực tiếp hơn để phát hiện ảnh hiện tại
     console.log('Setting up image detection logic');
 
-    // Hàm để tính toán ảnh hiện tại dựa trên vị trí cuộn - phiên bản cải tiến
+    // Hàm để tính toán ảnh hiện tại dựa trên vị trí cuộn - phiên bản mới
     const calculateCurrentImage = () => {
-      console.log('Calculating current image - improved version');
-      if (!sliderRef.current) return;
+      console.log('Calculating current image - new version');
+      if (!sliderRef.current) {
+        console.log('sliderRef.current is null');
+        return;
+      }
 
       // Lấy thông tin về container
       const container = sliderRef.current;
       const containerRect = container.getBoundingClientRect();
-      const containerCenter = containerRect.left + containerRect.width / 2;
 
-      console.log(`Container center: ${containerCenter}px, width: ${containerRect.width}px`);
+      // Biến để lưu số thứ tự lớn nhất của ảnh hiển thị
+      let maxVisibleOrder = 0;
+      let closestOrder = currentIndex; // Khởi tạo với giá trị hiện tại
 
-      // Biến để theo dõi ảnh gần nhất với trung tâm
-      let closestImage: HTMLDivElement | null = null;
-      let closestDistance = Infinity;
-      let closestOrder = 1;
-      let debugInfo: Array<{
-        order: number;
-        distance: string;
-        visible: boolean;
-        left: string;
-        right: string;
-        center: string;
-      }> = [];
+      try {
+        // Thêm data-order cho tất cả các ảnh và video nếu cần
+        const imageContainers = container.querySelectorAll('.flex-shrink-0.relative.flex.items-center.justify-center');
+        console.log(`Found ${imageContainers.length} potential items`);
 
-      // Kiểm tra tất cả các ảnh
-      imageRefs.current.forEach((ref) => {
-        if (!ref) return;
+        imageContainers.forEach((el, index) => {
+          if (!el.hasAttribute('data-order')) {
+            el.setAttribute('data-order', (index + 1).toString());
 
-        // Lấy thông tin về ảnh
-        const imageRect = ref.getBoundingClientRect();
-        const imageCenter = imageRect.left + imageRect.width / 2;
+            // Thêm data-countable="true" cho ảnh, "false" cho video và description
+            if (el.querySelector('img')) {
+              el.setAttribute('data-countable', 'true');
+            } else {
+              el.setAttribute('data-countable', 'false');
+            }
 
-        // Tính khoảng cách từ trung tâm ảnh đến trung tâm container
-        const distance = Math.abs(imageCenter - containerCenter);
-
-        // Kiểm tra xem ảnh có phần nào nằm trong viewport không
-        const isVisible =
-          imageRect.left < containerRect.right &&
-          imageRect.right > containerRect.left;
-
-        // Lấy order từ data attribute
-        const orderAttr = ref.getAttribute('data-order');
-        if (!orderAttr) return;
-        const orderNum = parseInt(orderAttr);
-
-        // Thu thập thông tin debug
-        debugInfo.push({
-          order: orderNum,
-          distance: distance.toFixed(2),
-          visible: isVisible,
-          left: imageRect.left.toFixed(2),
-          right: imageRect.right.toFixed(2),
-          center: imageCenter.toFixed(2)
+            console.log(`Added data-order=${index + 1} to element`);
+          }
         });
 
-        // Nếu ảnh có phần nào đó hiển thị và gần trung tâm hơn ảnh hiện tại
-        if (isVisible && distance < closestDistance) {
-          closestDistance = distance;
-          closestImage = ref;
-          closestOrder = orderNum;
+        // Lấy tất cả các phần tử có data-order và data-countable="true" (chỉ ảnh)
+        const itemElements = document.querySelectorAll('[data-order][data-countable="true"]');
+        console.log(`Found ${itemElements.length} countable items with data-order`);
+
+        // Kiểm tra từng phần tử
+        itemElements.forEach((el) => {
+          const itemRect = el.getBoundingClientRect();
+
+          // Kiểm tra xem item có hiển thị trong viewport không
+          // Ảnh phải hiển thị ít nhất 30% mới được tính
+          const visibleThreshold = 0.3; // 30%
+
+          const itemWidth = itemRect.width;
+          const rightEdgeOfScreen = containerRect.right;
+          const leftEdgeOfScreen = containerRect.left;
+          const leftEdgeOfItem = itemRect.left;
+          const rightEdgeOfItem = itemRect.right;
+
+          // Tính phần hiển thị của ảnh
+          const visibleLeft = Math.max(leftEdgeOfItem, leftEdgeOfScreen);
+          const visibleRight = Math.min(rightEdgeOfItem, rightEdgeOfScreen);
+          const visibleWidth = Math.max(0, visibleRight - visibleLeft);
+          const visiblePercent = visibleWidth / itemWidth;
+
+          const isVisible = visiblePercent >= visibleThreshold;
+
+          // Lấy order từ data attribute
+          const orderAttr = el.getAttribute('data-order');
+          if (!orderAttr) return;
+          const orderNum = parseInt(orderAttr);
+
+          // Nếu ảnh hiển thị và có số thứ tự lớn hơn số hiện tại
+          if (isVisible && orderNum > maxVisibleOrder) {
+            console.log(`Item ${orderNum} is visible (${(visiblePercent * 100).toFixed(1)}%) - new max order`);
+            maxVisibleOrder = orderNum;
+          }
+        });
+
+        // Nếu không tìm thấy ảnh nào hiển thị, giữ nguyên số cũ
+        if (maxVisibleOrder === 0) {
+          console.log('No visible images found, keeping current index');
+          return;
         }
-      });
 
-      // Log thông tin debug
-      console.table(debugInfo);
+        // Cập nhật số đếm nếu có thay đổi
+        if (maxVisibleOrder !== currentIndex) {
+          console.log(`Updating index from ${currentIndex} to ${maxVisibleOrder}`);
+          closestOrder = maxVisibleOrder;
+        }
 
-      // Nếu tìm thấy ảnh gần nhất
-      if (closestImage) {
-        console.log(`Closest image: ${closestOrder}, distance: ${closestDistance.toFixed(2)}px`);
-
-        // Luôn cập nhật chỉ số để đảm bảo nó luôn phản ánh ảnh hiện tại
+        // Luôn cập nhật chỉ số để đảm bảo nó luôn phản ánh ảnh hiện tại - sử dụng debounce để tránh cập nhật quá thường xuyên
         if (closestOrder !== currentIndex) {
           console.log(`Updating index from ${currentIndex} to ${closestOrder}`);
-          setCurrentIndex(closestOrder);
 
-          // Thêm hiệu ứng animation cho counter
-          const counter = document.getElementById('image-counter');
-          if (counter) {
-            counter.style.transform = 'scale(1.05)';
-            counter.style.opacity = '0.9';
+          // Sử dụng debounce để tránh cập nhật quá thường xuyên
+          const updateCounter = debounce(() => {
+            // Thêm hiệu ứng animation mượt mà cho counter
+            const counter = document.getElementById('image-counter');
+            if (counter) {
+              // Hiệu ứng fade out
+              counter.style.opacity = '0';
+              counter.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
 
-            setTimeout(() => {
-              counter.style.transform = 'scale(1)';
-              counter.style.opacity = '1';
-            }, 100);
-          }
+              // Đợi hiệu ứng hoàn thành rồi mới cập nhật số
+              setTimeout(() => {
+                // Cập nhật số
+                setCurrentIndex(closestOrder);
+
+                // Đợi một chút để đảm bảo DOM đã cập nhật
+                setTimeout(() => {
+                  // Hiệu ứng fade in
+                  counter.style.opacity = '1';
+                }, 50);
+              }, 300);
+            } else {
+              // Nếu không tìm thấy counter, vẫn cập nhật số
+              setCurrentIndex(closestOrder);
+            }
+          }, 200); // 200ms debounce
+
+          // Gọi hàm đã được debounce
+          updateCounter();
         }
+      } catch (error) {
+        console.error('Error in calculateCurrentImage:', error);
       }
     };
 
     // Không cần hàm handleImageDetection nữa vì đã xử lý trong handleScroll
 
+    // Tạo phiên bản debounced của calculateCurrentImage
+    const debouncedCalculateCurrentImage = debounce(() => {
+      calculateCurrentImage();
+    }, 150); // 150ms debounce để giảm số lần cập nhật
+
     // Đăng ký sự kiện scroll để cập nhật hiệu ứng animation và tính toán ảnh hiện tại
     const handleScroll = () => {
       // Cập nhật hiệu ứng animation
-      requestAnimationFrame(updateCounterAnimation);
+      updateCounterAnimation();
 
-      // Tính toán ảnh hiện tại
-      requestAnimationFrame(calculateCurrentImage);
+      // Tính toán ảnh hiện tại - sử dụng phiên bản debounced
+      debouncedCalculateCurrentImage();
+
+      // Log để debug
+      console.log('Scroll event triggered');
     };
 
     // Đăng ký nhiều sự kiện để đảm bảo phát hiện mọi thay đổi
     sliderRef.current.addEventListener('scroll', handleScroll, { passive: true });
-    sliderRef.current.addEventListener('wheel', handleScroll, { passive: true });
+
+    // Thêm CSS để ngăn chặn cuộn dọc trên container
+    if (window.innerWidth >= 768) {
+      sliderRef.current.style.overscrollBehaviorY = 'none';
+      sliderRef.current.style.touchAction = 'pan-x';
+    }
+
+    // Thêm event listener cho wheel để chuyển đổi cuộn dọc thành cuộn ngang
+    const wheelHandler = (e: WheelEvent) => {
+      // Chỉ xử lý trên desktop
+      if (window.innerWidth >= 768) {
+        // Ngăn chặn hành vi cuộn mặc định
+        e.preventDefault();
+
+        // Chuyển đổi cuộn dọc thành cuộn ngang
+        if (sliderRef.current) {
+          // Kiểm tra xem đây có phải là sự kiện từ touchpad không
+          // Touchpad thường có deltaMode = 0 và deltaY nhỏ hơn
+          const isTouchpad = e.deltaMode === 0 && Math.abs(e.deltaY) < 40;
+
+          // Điều chỉnh hệ số nhân dựa trên thiết bị đầu vào
+          const multiplier = isTouchpad ? 1.2 : 2.5;
+
+          // Sử dụng deltaX nếu có (cho touchpad hỗ trợ cuộn ngang)
+          // Hoặc sử dụng deltaY nếu không có deltaX (cho chuột thông thường)
+          const scrollDelta = e.deltaX !== 0 ? e.deltaX : e.deltaY * multiplier;
+
+          // Cuộn ngang với tốc độ phù hợp
+          sliderRef.current.scrollLeft += scrollDelta;
+
+          // Gọi phiên bản debounced để cập nhật counter
+          console.log(`${isTouchpad ? 'Touchpad' : 'Mouse wheel'} event triggered`);
+          debouncedCalculateCurrentImage();
+          updateCounterAnimation();
+        }
+      }
+    };
+
+    // Sử dụng passive: false để có thể gọi preventDefault()
+    sliderRef.current.addEventListener('wheel', wheelHandler, { passive: false });
+
+    // Thêm sự kiện gesturechange cho touchpad trên macOS
+    const gestureHandler = (e: any) => {
+      // Ngăn chặn hành vi mặc định
+      e.preventDefault();
+
+      if (sliderRef.current && window.innerWidth >= 768) {
+        // Sử dụng e.scale để xác định hướng cuộn
+        const scrollAmount = (e.scale - 1) * 100;
+        sliderRef.current.scrollLeft += scrollAmount;
+
+        console.log('Gesture event triggered');
+        debouncedCalculateCurrentImage();
+        updateCounterAnimation();
+      }
+    };
+
+    // Thêm sự kiện gesturechange cho touchpad trên macOS
+    sliderRef.current.addEventListener('gesturechange', gestureHandler, { passive: false });
+
+    // Thêm sự kiện mousewheel cho các trình duyệt cũ hơn
+    sliderRef.current.addEventListener('mousewheel' as keyof HTMLElementEventMap, wheelHandler as EventListener, { passive: false });
+
+    // Thêm sự kiện DOMMouseScroll cho Firefox
+    sliderRef.current.addEventListener('DOMMouseScroll' as keyof HTMLElementEventMap, wheelHandler as EventListener, { passive: false });
+
     sliderRef.current.addEventListener('touchmove', handleScroll, { passive: true });
 
     // Thêm sự kiện resize để xử lý khi kích thước màn hình thay đổi
     window.addEventListener('resize', handleScroll, { passive: true });
 
     // Thiết lập interval để kiểm tra định kỳ (đề phòng các sự kiện khác không được kích hoạt)
-    const checkInterval = setInterval(handleScroll, 500);
+    // Sử dụng thời gian dài hơn vì đã có debounce
+    const checkInterval = setInterval(() => {
+      console.log('Interval check triggered');
+      calculateCurrentImage(); // Sử dụng phiên bản không debounced để đảm bảo cập nhật
+    }, 300);
+
+    // Thêm một interval khác để đảm bảo counter được cập nhật
+    const forceUpdateInterval = setInterval(() => {
+      console.log('Force update triggered');
+      // Gọi trực tiếp setCurrentIndex để cập nhật counter
+      const container = sliderRef.current;
+      if (container) {
+        const containerRect = container.getBoundingClientRect();
+        const leftEdgeOfScreen = containerRect.left;
+        const rightEdgeOfScreen = containerRect.right;
+
+        // Lấy tất cả các items có data-order và data-countable="true" (chỉ ảnh)
+        const allItems = Array.from(container.querySelectorAll('[data-order][data-countable="true"]')) as HTMLElement[];
+
+        // Tìm ảnh có số thứ tự lớn nhất đang hiển thị
+        let maxVisibleOrder = 0;
+
+        allItems.forEach(el => {
+          const rect = el.getBoundingClientRect();
+
+          // Tính phần hiển thị của ảnh
+          const itemWidth = rect.width;
+          const leftEdgeOfItem = rect.left;
+          const rightEdgeOfItem = rect.right;
+
+          const visibleLeft = Math.max(leftEdgeOfItem, leftEdgeOfScreen);
+          const visibleRight = Math.min(rightEdgeOfItem, rightEdgeOfScreen);
+          const visibleWidth = Math.max(0, visibleRight - visibleLeft);
+          const visiblePercent = visibleWidth / itemWidth;
+
+          // Ảnh phải hiển thị ít nhất 30% mới được tính
+          const visibleThreshold = 0.3; // 30%
+          const isVisible = visiblePercent >= visibleThreshold;
+
+          if (isVisible) {
+            const orderAttr = el.getAttribute('data-order');
+            if (orderAttr) {
+              const orderNum = parseInt(orderAttr);
+
+              // Nếu ảnh hiển thị và có số thứ tự lớn hơn số hiện tại
+              if (orderNum > maxVisibleOrder) {
+                console.log(`Item ${orderNum} is visible (${(visiblePercent * 100).toFixed(1)}%) - new max order`);
+                maxVisibleOrder = orderNum;
+              }
+            }
+          }
+        });
+
+        // Nếu tìm thấy ảnh hiển thị và số thứ tự khác với số hiện tại
+        if (maxVisibleOrder > 0 && maxVisibleOrder !== currentIndex) {
+          console.log(`Force updating index from ${currentIndex} to ${maxVisibleOrder}`);
+
+          // Thêm hiệu ứng animation mượt mà cho counter
+          const counter = document.getElementById('image-counter');
+          if (counter) {
+            // Hiệu ứng fade out
+            counter.style.opacity = '0';
+            counter.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
+
+            // Đợi hiệu ứng hoàn thành rồi mới cập nhật số
+            setTimeout(() => {
+              // Cập nhật số
+              setCurrentIndex(maxVisibleOrder);
+
+              // Đợi một chút để đảm bảo DOM đã cập nhật
+              setTimeout(() => {
+                // Hiệu ứng fade in
+                counter.style.opacity = '1';
+              }, 50);
+            }, 300);
+          } else {
+            // Nếu không tìm thấy counter, vẫn cập nhật số
+            setCurrentIndex(maxVisibleOrder);
+          }
+        }
+      }
+    }, 300);
 
     // Initial calculation and animation
     calculateCurrentImage();
@@ -527,15 +889,21 @@ const ProjectDetail = () => {
       // Xóa tất cả các event listener
       if (sliderRef.current) {
         sliderRef.current.removeEventListener('scroll', handleScroll);
-        sliderRef.current.removeEventListener('wheel', handleScroll);
+        // Xóa event listener wheel đặc biệt
+        sliderRef.current.removeEventListener('wheel', wheelHandler);
         sliderRef.current.removeEventListener('touchmove', handleScroll);
+        // Xóa các event listener mới thêm
+        sliderRef.current.removeEventListener('gesturechange', gestureHandler);
+        sliderRef.current.removeEventListener('mousewheel' as keyof HTMLElementEventMap, wheelHandler as EventListener);
+        sliderRef.current.removeEventListener('DOMMouseScroll' as keyof HTMLElementEventMap, wheelHandler as EventListener);
       }
 
       // Xóa event listener trên window
       window.removeEventListener('resize', handleScroll);
 
-      // Xóa interval
+      // Xóa tất cả các interval
       clearInterval(checkInterval);
+      clearInterval(forceUpdateInterval);
 
       console.log('Cleaned up all event listeners and intervals');
     };
@@ -568,28 +936,22 @@ const ProjectDetail = () => {
   // Component để hiển thị video
   const VideoBlock = ({ embedUrl }: { embedUrl: string }) => (
     <div className="w-full py-4 flex justify-center">
-      <div className="aspect-video w-full max-w-4xl">
+      <div className="aspect-video w-full max-w-4xl overflow-hidden shadow-xl">
         <iframe
           width="100%"
           height="100%"
           src={embedUrl}
           title="YouTube video player"
-          frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           referrerPolicy="strict-origin-when-cross-origin"
           allowFullScreen
-          className="shadow-lg"
+          style={{ border: 0 }}
         ></iframe>
       </div>
     </div>
   );
 
-  // Component để hiển thị HTML từ chuỗi
-  const HtmlBlock = ({ htmlContent }: { htmlContent: string }) => (
-    <div className="w-full py-4 flex justify-center"
-      dangerouslySetInnerHTML={{ __html: htmlContent }}
-    />
-  );
+  // Component HtmlBlock đã được loại bỏ vì không sử dụng
 
   return (
     <div className="min-h-screen bg-white">
@@ -629,7 +991,7 @@ const ProjectDetail = () => {
         {/* Desktop view - horizontal scroll */}
         <div
           ref={sliderRef}
-          className="hidden md:flex md:overflow-x-auto h-[calc(100vh-120px)] w-full px-4 md:gap-16 pt-[25px] pt-[25px] pb-[25px] md:overflow-y-hidden md:scrollbar-hide md:horizontal-scroll-container"
+          className="hidden md:flex md:overflow-x-auto h-[calc(100vh-120px)] w-full px-4 md:gap-16 pt-[25px] pb-[25px] md:overflow-y-hidden md:scrollbar-hide md:horizontal-scroll-container"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {/* Project title */}
@@ -656,20 +1018,34 @@ const ProjectDetail = () => {
                 </div>
               );
             } else if (item.type === 'video') {
+              // Video items already have their order set
               return (
                 <div
                   key={`video-${index}`}
+                  ref={(el) => {
+                    if (el) {
+                      imageRefs.current[index] = el;
+                      // Đảm bảo data-order được thiết lập đúng
+                      setTimeout(() => {
+                        if (el) el.setAttribute('data-order', item.order.toString());
+                      }, 0);
+                    }
+                  }}
+                  data-order={item.order}
+                  data-type="video"
+                  data-countable="false"
+                  data-index={index}
                   className="h-full flex-shrink-0 relative flex items-center justify-center"
                 >
-                  <div className="w-[960px] aspect-video">
+                  <div className="h-full max-h-[80vh] aspect-video shadow-xl overflow-hidden">
                     <iframe
                       className="w-full h-full"
                       src={item.content}
                       title="YouTube video player"
-                      frameBorder="0"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                       referrerPolicy="strict-origin-when-cross-origin"
                       allowFullScreen
+                      style={{ border: 0 }}
                     ></iframe>
                   </div>
                 </div>
@@ -687,9 +1063,16 @@ const ProjectDetail = () => {
                   ref={(el) => {
                     if (el) {
                       imageRefs.current[index] = el;
+                      // Đảm bảo data-order được thiết lập đúng
+                      setTimeout(() => {
+                        if (el) el.setAttribute('data-order', imageOrder.toString());
+                      }, 0);
                     }
                   }}
                   data-order={imageOrder}
+                  data-type="image"
+                  data-countable="true"
+                  data-index={index}
                   className="h-full flex-shrink-0 relative flex items-center justify-center"
                 >
                   <img
@@ -732,7 +1115,7 @@ const ProjectDetail = () => {
             {projectItems.map((item, index) => {
               if (item.type === 'description') {
                 return <DescriptionBlock key={`desc-${index}`} content={item.content} />;
-              } else if (item.type === 'video' as 'image' | 'description' | 'video') {
+              } else if (item.type === 'video') {
                 return <VideoBlock key={`video-${index}`} embedUrl={item.content} />;
               } else {
                 return (
@@ -761,16 +1144,21 @@ const ProjectDetail = () => {
         <div
           className="hidden md:flex fixed bottom-8 left-8 z-50 bg-white text-black px-4 py-2 rounded-full font-medium transition-all duration-300 ease-in-out items-center shadow-md"
           style={{
-            transform: currentIndex > 1 ? 'scale(1)' : 'scale(0.95)',
-            opacity: currentIndex > 1 ? 1 : 0.7,
+            transform: 'scale(1)',
+            opacity: 1,
             pointerEvents: 'none' // Để không cản trở việc click vào các phần tử phía dưới
           }}
         >
-          <span className="text-3xl font-light transition-all duration-300" id="image-counter">
+          <span
+            className="text-3xl font-light"
+            id="image-counter"
+            style={{
+              display: 'inline-block',
+              opacity: 1,
+              transition: 'opacity 0.3s ease-out, transform 0.3s ease-out'
+            }}
+          >
             {currentIndex}
-          </span>
-          <span className="text-sm ml-1 self-end mb-1 opacity-60">
-            /{projectItems.filter(item => item.type === 'image').length}
           </span>
         </div>
       </main>

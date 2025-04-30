@@ -8,8 +8,8 @@ import { getErrorMessage } from "@/utils/errorHandler";
 import LoadingScreen from '@/components/LoadingScreen';
 import dynamic from 'next/dynamic';
 
-// Lazy load ReactPlayer to avoid SSR issues
-const ReactPlayer = dynamic(() => import('react-player/youtube'), { ssr: false });
+// Lazy load PlyrVideoPlayer to avoid SSR issues
+const PlyrVideoPlayer = dynamic(() => import('@/components/PlyrVideoPlayer'), { ssr: false });
 
 type Project = {
   id: number;
@@ -29,8 +29,8 @@ const getYouTubeId = (url: string): string => {
   // Try to match ID from various YouTube URL formats
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
   const match = url.match(regExp);
-  
-  // Return the ID if found, otherwise return the original string 
+
+  // Return the ID if found, otherwise return the original string
   // (might be a direct ID already)
   return (match && match[2].length === 11) ? match[2] : url;
 };
@@ -56,9 +56,9 @@ export default function Home() {
   // Handle hydration
   useEffect(() => {
     setMounted(true);
-    
+
     // YouTube API is loaded automatically by ReactPlayer
-    
+
     return () => {
       // Clean up
     };
@@ -85,23 +85,23 @@ export default function Home() {
   // Setup auto-scrolling
   useEffect(() => {
     if (!mounted || projectsLoading) return;
-    
+
     const startAutoScroll = () => {
       if (autoScrollRef.current) clearInterval(autoScrollRef.current);
-      
+
       autoScrollRef.current = setInterval(() => {
         if (!isUserActiveRef.current && mainRef.current) {
           // Get current scroll position
           const currentPosition = window.scrollY;
           const maxScroll = document.body.scrollHeight - window.innerHeight - 10;
-          
+
           // Check if we need to reverse direction
           if (currentPosition >= maxScroll && scrollDirectionRef.current === 'down') {
             scrollDirectionRef.current = 'up';
           } else if (currentPosition <= 10 && scrollDirectionRef.current === 'up') {
             scrollDirectionRef.current = 'down';
           }
-          
+
           // Scroll based on direction
           if (scrollDirectionRef.current === 'down') {
             window.scrollTo({
@@ -117,52 +117,52 @@ export default function Home() {
         }
       }, 30);
     };
-    
+
     const resetInactivityTimer = () => {
       isUserActiveRef.current = true;
-      
+
       if (inactivityTimerRef.current) {
         clearTimeout(inactivityTimerRef.current);
       }
-      
+
       inactivityTimerRef.current = setTimeout(() => {
         isUserActiveRef.current = false;
       }, 3000); // Start auto-scrolling after 3 seconds of inactivity
     };
-    
+
     // Track user activity
     const handleUserActivity = () => {
       resetInactivityTimer();
     };
-    
+
     // Track scroll position to detect user scrolling
     const handleScroll = () => {
       const currentPosition = window.scrollY;
-      
+
       // If scroll position changed significantly, consider user active
       if (Math.abs(currentPosition - scrollPositionRef.current) > 5) {
         resetInactivityTimer();
       }
-      
+
       scrollPositionRef.current = currentPosition;
     };
-    
+
     // Start auto-scroll initially
     startAutoScroll();
     resetInactivityTimer();
-    
+
     // Add event listeners
     window.addEventListener('mousemove', handleUserActivity);
     window.addEventListener('mousedown', handleUserActivity);
     window.addEventListener('keydown', handleUserActivity);
     window.addEventListener('touchstart', handleUserActivity);
     window.addEventListener('scroll', handleScroll, { passive: true });
-    
+
     return () => {
       // Cleanup
       if (autoScrollRef.current) clearInterval(autoScrollRef.current);
       if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
-      
+
       window.removeEventListener('mousemove', handleUserActivity);
       window.removeEventListener('mousedown', handleUserActivity);
       window.removeEventListener('keydown', handleUserActivity);
@@ -184,7 +184,7 @@ export default function Home() {
     // Use maxresdefault for highest quality, fallback to hqdefault
     return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
   };
-  
+
   // Function to handle mouse enter on a project card
   const handleMouseEnter = (projectId: number, imageCount: number, hasVideo: boolean, videoUrl?: string) => {
     // Handle image rotation for projects with multiple images
@@ -193,10 +193,10 @@ export default function Home() {
       if (hoverTimersRef.current[projectId]) {
         clearInterval(hoverTimersRef.current[projectId]);
       }
-      
+
       // Start with index 0
       setHoverStates(prev => ({ ...prev, [projectId]: 0 }));
-      
+
       // Set up an interval to cycle through images
       const timer = setInterval(() => {
         setHoverStates(prev => {
@@ -205,13 +205,13 @@ export default function Home() {
           return { ...prev, [projectId]: nextIndex };
         });
       }, 1000); // Change image every second
-      
+
       hoverTimersRef.current[projectId] = timer;
     } else {
       // Just set hover state for the project
       setHoverStates(prev => ({ ...prev, [projectId]: 0 }));
     }
-    
+
     // Handle video
     if (hasVideo && videoUrl) {
       const videoId = getYouTubeId(videoUrl);
@@ -220,40 +220,102 @@ export default function Home() {
           const player = videoPlayersRef.current[projectId];
           // Resume from saved timestamp if available
           const timestamp = videoTimestamps.current[projectId] || 0;
-          player.seekTo(timestamp);
-          player.playVideo();
+
+          try {
+            // Kiểm tra xem player có phương thức seek không
+            if (typeof player.seek === 'function') {
+              player.seek(timestamp);
+            } else if ('currentTime' in player) {
+              // Fallback: Sử dụng thuộc tính currentTime
+              player.currentTime = timestamp;
+            }
+          } catch (err) {
+            console.warn('Could not seek to timestamp:', err);
+          }
+
+          try {
+            // Kiểm tra xem player có phương thức play không
+            if (typeof player.play === 'function') {
+              player.play();
+            } else {
+              // Fallback: Thử cách khác nếu không có phương thức play
+              const iframe = player.elements?.container?.querySelector('iframe');
+              if (iframe) {
+                // Thêm tham số autoplay=1 vào URL của iframe
+                let src = iframe.src;
+                if (!src.includes('autoplay=1')) {
+                  src = src.replace('autoplay=0', 'autoplay=1');
+                  if (!src.includes('autoplay=')) {
+                    src += '&autoplay=1';
+                  }
+                  iframe.src = src;
+                }
+              }
+            }
+          } catch (err) {
+            console.error('Failed to play video:', err);
+          }
         } catch (e) {
-          console.error('Failed to play video:', e);
+          console.error('Failed to access player:', e);
         }
       }
     }
   };
-  
-  // Function to handle mouse leave 
+
+  // Function to handle mouse leave
   const handleMouseLeave = (projectId: number, hasVideo: boolean) => {
     // Clear the timer and reset state
     if (hoverTimersRef.current[projectId]) {
       clearInterval(hoverTimersRef.current[projectId]);
       delete hoverTimersRef.current[projectId];
     }
-    
+
     setHoverStates(prev => {
       const newState = { ...prev };
       delete newState[projectId];
       return newState;
     });
-    
+
     // Handle video pause and save timestamp
     if (hasVideo) {
       try {
         const player = videoPlayersRef.current[projectId];
         if (player) {
           // Save current timestamp before pausing
-          videoTimestamps.current[projectId] = player.currentTime;
-          player.pause();
+          try {
+            // Kiểm tra xem player có thuộc tính currentTime không
+            if ('currentTime' in player) {
+              videoTimestamps.current[projectId] = player.currentTime;
+            } else if (typeof player.getCurrentTime === 'function') {
+              // Fallback: Sử dụng phương thức getCurrentTime nếu có
+              videoTimestamps.current[projectId] = player.getCurrentTime();
+            }
+          } catch (err) {
+            // Ignore if currentTime is not available
+            console.warn('Could not save timestamp:', err);
+          }
+
+          // Pause the video
+          try {
+            // Kiểm tra xem player có phương thức pause không
+            if (typeof player.pause === 'function') {
+              player.pause();
+            } else {
+              // Fallback: Thử cách khác nếu không có phương thức pause
+              const iframe = player.elements?.container?.querySelector('iframe');
+              if (iframe) {
+                // Lưu URL hiện tại và thay thế autoplay=1 bằng autoplay=0
+                let src = iframe.src;
+                src = src.replace('autoplay=1', 'autoplay=0');
+                iframe.src = src;
+              }
+            }
+          } catch (err) {
+            console.error('Failed to pause video:', err);
+          }
         }
       } catch (e) {
-        console.error('Failed to pause video:', e);
+        console.error('Failed to access player:', e);
       }
     }
   };
@@ -267,7 +329,7 @@ export default function Home() {
 
   if (initialLoading && projectsLoading) {
     return (
-      <LoadingScreen 
+      <LoadingScreen
         onComplete={() => {
           setInitialLoading(false);
           setTimeout(() => setContentReady(true), 300); // Add slight delay for smoother transition
@@ -307,7 +369,7 @@ export default function Home() {
           {projectsLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-3">
               {[1, 2, 3, 4, 5, 6].map((placeholder) => (
-                <div 
+                <div
                   key={placeholder}
                   className="relative block aspect-square overflow-hidden bg-gray-100 animate-pulse"
                 >
@@ -329,16 +391,16 @@ export default function Home() {
                 const currentImageIndex = hoverStates[project.id] || 0;
                 const hasVideos = project.video_urls && project.video_urls.length > 0;
                 const shouldShowVideo = project.show_video && hasVideos;
-                
+
                 return (
                   <Link
                     key={project.id}
                     href={`/projects/${project.id}`}
                     className="relative block aspect-[9/12] overflow-hidden group"
                     onMouseEnter={() => handleMouseEnter(
-                      project.id, 
-                      imageCount, 
-                      Boolean(shouldShowVideo), 
+                      project.id,
+                      imageCount,
+                      Boolean(shouldShowVideo),
                       shouldShowVideo ? project.video_urls[0].url : undefined
                     )}
                     onMouseLeave={() => handleMouseLeave(project.id, Boolean(shouldShowVideo))}
@@ -348,36 +410,21 @@ export default function Home() {
                         // Video container
                         <div className="absolute inset-0 bg-black">
                           {hoverStates[project.id] !== undefined ? (
-                            // Show video with ReactPlayer on hover
+                            // Show video with PlyrVideoPlayer on hover
                             <div className="w-full h-full">
-                              <ReactPlayer
-                                ref={(player: any) => {
-                                  if (player) {
-                                    videoPlayersRef.current[project.id] = player;
-                                  }
-                                }}
-                                url={`https://www.youtube.com/watch?v=${getYouTubeId(project.video_urls[0].url)}`}
-                                width="100%"
-                                height="100%"
+                              <PlyrVideoPlayer
+                                videoId={getYouTubeId(project.video_urls[0].url)}
                                 playing={true}
                                 muted={true}
-                                controls={false}
-                                loop={true}
-                                config={{
-                                  playerVars: {
-                                    controls: 0,
-                                    showinfo: 0,
-                                    rel: 0,
-                                    iv_load_policy: 3,
-                                    modestbranding: 1
-                                  }
+                                onReady={(player) => {
+                                  videoPlayersRef.current[project.id] = player;
                                 }}
                               />
                             </div>
                           ) : (
                             // Show high quality thumbnail when not hovering
                             <div className="absolute inset-0">
-                              <Image 
+                              <Image
                                 src={getHighQualityThumbnail(getYouTubeId(project.video_urls[0].url))}
                                 alt={`${project.name} video thumbnail`}
                                 fill
@@ -386,13 +433,7 @@ export default function Home() {
                                 quality={95}
                                 priority
                               />
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="w-16 h-16 rounded-full bg-black/50 flex items-center justify-center">
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white">
-                                    <path d="M8 5v14l11-7z" />
-                                  </svg>
-                                </div>
-                              </div>
+
                             </div>
                           )}
                         </div>
@@ -400,13 +441,13 @@ export default function Home() {
                         <>
                           {/* Cycle through images on hover or show first image */}
                           {projectImages.map((imageUrl, index) => (
-                            <div 
+                            <div
                               key={index}
                               className={`absolute inset-0 transition-opacity duration-500 ${
                                 index === currentImageIndex ? 'opacity-100' : 'opacity-0'
                               }`}
                             >
-                              <Image 
+                              <Image
                                 src={imageUrl}
                                 alt={`${project.name} - Image ${index + 1}`}
                                 fill

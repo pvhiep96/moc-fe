@@ -7,6 +7,8 @@ import Link from 'next/link'
 import { projectsApi } from '@/services/api'
 import { getErrorMessage } from '@/utils/errorHandler'
 import LoadingScreen from '@/components/LoadingScreen';
+import MenuOverlay from '@/components/MenuOverlay';
+import DynamicMenuButton from '@/components/DynamicMenuButton';
 
 // Định nghĩa kiểu dữ liệu cho các phần tử hiển thị
 type ProjectItem = {
@@ -38,6 +40,7 @@ const ProjectDetail = () => {
   const router = useRouter()
   const params = useParams()
   const id = params.id as string
+  const [menuOpen, setMenuOpen] = useState(false);
   const [projectImages, setProjectImages] = useState<string[]>([])
   const [projectItems, setProjectItems] = useState<ProjectItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -422,6 +425,8 @@ const ProjectDetail = () => {
         // Fetch project data from API
         const projectData = await projectsApi.getProject(Number(id) || id);
 
+        console.log(`projectData: ${JSON.stringify(projectData)}`)
+
         // Set project name
         setProjectName(projectData.name ? projectData.name.toUpperCase() : `Project ${id}`);
 
@@ -437,7 +442,7 @@ const ProjectDetail = () => {
           console.log('Using ordered content from API:', projectData.ordered_content);
 
           // Map the ordered content to our ProjectItem format
-          projectData.ordered_content.forEach((item) => {
+          projectData.ordered_content.forEach((item: {type: string, content: string, position: number}) => {
             items.push({
               type: item.type as 'image' | 'description' | 'video',
               content: item.content,
@@ -975,6 +980,12 @@ const ProjectDetail = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Menu Overlay */}
+      <MenuOverlay isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+
+      {/* Dynamic Menu Button with color changing based on background */}
+      <DynamicMenuButton menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+
       {/* Fixed header with logo at the top */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm py-4 flex justify-center items-center">
         <Link href="/">
@@ -994,6 +1005,17 @@ const ProjectDetail = () => {
             <span className="uppercase tracking-wider">Back to Projects</span>
           </Link>
         </div>
+        <div className="hidden md:block pr-8">
+          <Link
+            href={`/projects/${id}/detail`}
+            className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-black hover:text-gray-600 transition-all duration-300"
+          >
+            <span className="uppercase tracking-wider">View Detail</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="group-hover:translate-x-1 transition-transform duration-300">
+              <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </Link>
+        </div>
       </header>
 
       {/* Nút Back sticky phía dưới bên phải cho mobile */}
@@ -1005,6 +1027,17 @@ const ProjectDetail = () => {
           <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
         <span className="uppercase tracking-wider">Back</span>
+      </Link>
+
+      {/* Nút View Detail sticky phía dưới bên trái cho mobile */}
+      <Link
+        href={`/projects/${id}/detail`}
+        className="md:hidden fixed bottom-4 left-4 flex items-center gap-2 px-4 py-2 text-sm font-medium z-50 bg-white/90 backdrop-blur-sm rounded-full text-black shadow-md"
+      >
+        <span className="uppercase tracking-wider">View Detail</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
       </Link>
 
       <main className="h-screen pt-[80px] md:pt-[120px]">

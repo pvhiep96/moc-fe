@@ -19,9 +19,19 @@ const monCheri = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "MOC Productions - Photography & Videography Studio",
+  title: {
+    default: "MOC Productions - Photography & Videography Studio",
+    template: "%s | MOC Productions"
+  },
   description: "MOC Productions is a creative studio specializing in photography and videography for weddings, events, and commercial projects.",
   keywords: "photography, videography, wedding, events, commercial, studio, MOC Productions",
+  creator: "MOC Productions",
+  publisher: "MOC Productions",
+  formatDetection: {
+    email: true,
+    address: true,
+    telephone: true,
+  },
 };
 
 export default function RootLayout({

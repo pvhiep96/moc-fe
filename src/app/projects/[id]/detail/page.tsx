@@ -5,6 +5,9 @@ import { useParams } from 'next/navigation';
 import { projectsApi } from '@/services/api';
 import LoadingScreen from '@/components/LoadingScreen';
 import Image from 'next/image';
+import Link from 'next/link';
+import MenuOverlay from '@/components/MenuOverlay';
+import DynamicMenuButton from '@/components/DynamicMenuButton';
 
 type Project = {
   id: number;
@@ -13,6 +16,7 @@ type Project = {
   cover_image: string;
   hover_image: string;
   images: string[];
+  all_images: string[];
   video_urls: { url: string }[];
   descriptions: { id: number; content: string; position_display: number }[];
 };
@@ -20,6 +24,7 @@ type Project = {
 export default function ProjectDetail() {
   const params = useParams();
   const id = params?.id;
+  const [menuOpen, setMenuOpen] = useState(false);
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -47,7 +52,7 @@ export default function ProjectDetail() {
           setLoading(false);
           return;
         }
-        const data = await projectsApi.getProject(Number(id));
+        const data = await projectsApi.getProjectWithAllImages(Number(id));
         setProject(data);
       } catch (err) {
         setError('Failed to load project');
@@ -69,8 +74,8 @@ export default function ProjectDetail() {
     setLightboxOpen(true);
   };
   const closeLightbox = () => setLightboxOpen(false);
-  const prevImage = () => setLightboxIndex((prev) => (prev - 1 + project.images.length) % project.images.length);
-  const nextImage = () => setLightboxIndex((prev) => (prev + 1) % project.images.length);
+  const prevImage = () => setLightboxIndex((prev) => (prev - 1 + project.all_images.length) % project.all_images.length);
+  const nextImage = () => setLightboxIndex((prev) => (prev + 1) % project.all_images.length);
 
   // VideoBlock giống trang projects/[id]
   const VideoBlock = ({ embedUrl }: { embedUrl: string }) => (
@@ -81,7 +86,7 @@ export default function ProjectDetail() {
           height="100%"
           src={embedUrl}
           title="YouTube video player"
-          frameBorder="0"
+          style={{ border: 0 }}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           referrerPolicy="strict-origin-when-cross-origin"
           allowFullScreen
@@ -92,18 +97,54 @@ export default function ProjectDetail() {
   );
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Logo */}
-      <div className="flex justify-center mb-8">
-        <Image
-          src="/moc_nguyen_production_black.png"
-          alt="MOC Production Logo"
-          width={120}
-          height={40}
-          className="h-[50px] md:h-[80px] w-auto object-contain"
-          priority
-        />
+    <div className="min-h-screen bg-white">
+      {/* Menu Overlay */}
+      <MenuOverlay isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+
+      {/* Dynamic Menu Button with color changing based on background */}
+      <DynamicMenuButton menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+
+      {/* Fixed header with logo at the top */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm py-4 flex justify-center items-center">
+        <Link href="/">
+          <Image
+            src="/moc_nguyen_production_black.png"
+            alt="Moc Productions"
+            width={150}
+            height={50}
+            className="w-[120px] md:w-[150px] cursor-pointer"
+            priority
+          />
+        </Link>
       </div>
+
+      <header className="fixed inset-x-0 pl-8 top-20 z-50 flex items-center justify-between bg-transparent]">
+        <div className="hidden md:block">
+          <Link
+            href={`/projects/${id}`}
+            className="group flex items-center gap-2 px-4 py-2 text-sm font-medium text-black hover:text-gray-600 transition-all duration-300"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="transform rotate-180 group-hover:-translate-x-1 transition-transform duration-300">
+              <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="uppercase tracking-wider">Back to project</span>
+          </Link>
+        </div>
+      </header>
+
+      {/* Nút Back sticky phía dưới bên phải cho mobile */}
+      <Link
+        href={`/projects/${id}`}
+        className="md:hidden fixed bottom-4 right-4 flex items-center gap-2 px-4 py-2 text-sm font-medium z-50 bg-white/90 backdrop-blur-sm rounded-full text-black shadow-md"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="transform rotate-180">
+          <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        <span className="uppercase tracking-wider">Back</span>
+      </Link>
+
+      <div className="container mx-auto px-4 py-8 pt-[80px] md:pt-[145px]">
+
       <h1 className="text-3xl font-bold mb-6">{project.name}</h1>
       {/* Tabs */}
       <div className="flex gap-4 mb-8">
@@ -121,7 +162,7 @@ export default function ProjectDetail() {
       {/* Tab content */}
       {activeTab === 'images' && (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-          {project.images.map((image, idx) => (
+          {project.all_images.map((image, idx) => (
             <div key={idx} className="relative aspect-[9/12] cursor-pointer group overflow-hidden project-card" onClick={() => openLightbox(idx)}>
               <img
                 src={image}
@@ -142,14 +183,14 @@ export default function ProjectDetail() {
             })}
           </div>
         </>
-        
+
       )}
       {/* Lightbox */}
       {lightboxOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
           <button onClick={prevImage} className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-3xl">&#8592;</button>
           <img
-            src={project.images[lightboxIndex]}
+            src={project.all_images[lightboxIndex]}
             alt={`Ảnh ${lightboxIndex + 1}`}
             className="max-h-[100vh] max-w-[100vw] rounded shadow-lg"
             draggable={false}
@@ -164,6 +205,8 @@ export default function ProjectDetail() {
           >&#10005;</button>
         </div>
       )}
+
+
       {/* Project Descriptions */}
       {project.descriptions && project.descriptions.length > 0 && (
         <div className="prose max-w-none mt-8">
@@ -174,6 +217,7 @@ export default function ProjectDetail() {
             ))}
         </div>
       )}
+      </div>
     </div>
   );
-} 
+}

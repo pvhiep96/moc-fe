@@ -3,9 +3,13 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import MenuOverlay from '@/components/MenuOverlay';
+import DynamicMenuButton from '@/components/DynamicMenuButton';
+import DynamicLogo from '@/components/DynamicLogo';
 
 export default function AboutPage() {
   const [scrollY, setScrollY] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Handle scroll event to create parallax and fade-in effects
@@ -49,6 +53,15 @@ export default function AboutPage() {
 
   return (
     <div className="bg-white text-black min-h-screen">
+      {/* Menu Overlay */}
+      <MenuOverlay isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+
+      {/* Dynamic Menu Button with color changing based on background */}
+      <DynamicMenuButton menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+
+      {/* Dynamic Logo at top left corner */}
+      <DynamicLogo width={120} height={40} />
+
       {/* Hero Section */}
       <div
         className="w-full h-screen relative overflow-hidden"
@@ -73,7 +86,7 @@ export default function AboutPage() {
             ABOUT US
           </h1>
         </div>
-        <div className="absolute top-4 left-4 text-xs font-bold tracking-widest text-white">MOC PRODUCTIONS</div>
+
       </div>
 
       {/* Introduction Section */}

@@ -8,8 +8,13 @@ import { getErrorMessage } from "@/utils/errorHandler";
 import LoadingScreen from '@/components/LoadingScreen';
 import dynamic from 'next/dynamic';
 
-// Lazy load PlyrVideoPlayer to avoid SSR issues
+// Metadata is defined in app/page.metadata.ts
+
+// Lazy load components to avoid SSR issues
 const PlyrVideoPlayer = dynamic(() => import('@/components/PlyrVideoPlayer'), { ssr: false });
+const MenuOverlay = dynamic(() => import('@/components/MenuOverlay'), { ssr: false });
+const DynamicMenuButton = dynamic(() => import('@/components/DynamicMenuButton'), { ssr: false });
+const DynamicLogo = dynamic(() => import('@/components/DynamicLogo'), { ssr: false });
 
 type Project = {
   id: number;
@@ -43,6 +48,7 @@ export default function Home() {
   const [error, setError] = useState('');
   const [initialLoading, setInitialLoading] = useState(true);
   const [contentReady, setContentReady] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [hoverStates, setHoverStates] = useState<{[key: number]: number}>({});
   const hoverTimersRef = useRef<{[key: number]: NodeJS.Timeout}>({});
   const videoPlayersRef = useRef<{[key: number]: any}>({});
@@ -341,21 +347,14 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-black fade-in">
-      {/* Header with logo */}
-      <header className="fixed top-0 left-0 w-full z-50 p-4 md:p-6">
-        <Link href="/" className="z-50">
-          <Image
-            src="/moc_nguyen_production_black.png"
-            alt="MOC Production Logo"
-            width={120}
-            height={40}
-            className="h-[50px] md:h-[80px] w-auto object-contain"
-            priority
-            quality={100}
-            unoptimized={true}
-          />
-        </Link>
-      </header>
+      {/* Menu Overlay */}
+      <MenuOverlay isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+
+      {/* Dynamic Menu Button with color changing based on background */}
+      <DynamicMenuButton menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+
+      {/* Dynamic Logo at top left corner */}
+      <DynamicLogo width={120} height={40} />
 
       {/* Main Content */}
       <main ref={mainRef} className="w-full">

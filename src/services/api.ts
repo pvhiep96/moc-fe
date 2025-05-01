@@ -13,6 +13,11 @@ export const projectsApi = {
     const response = await apiClient.get(`${API_V1_PATH}/projects/${id}`);
     return response.data;
   },
+  getProjectWithAllImages: async (id: number | string) => {
+    const response = await apiClient.get(`${API_V1_PATH}/projects/${id}/full`);
+    console.log(`response: ${JSON.stringify(response.data)}`) 
+    return response.data;
+  },
   getProjectWithReloadedImages: async (id: number | string) => {
     const response = await apiClient.get(`${API_V1_PATH}/projects/${id}?reload_images=true`);
     return response.data;

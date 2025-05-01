@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import MenuOverlay from '@/components/MenuOverlay'
 
 // Định nghĩa kiểu dữ liệu cho các gói dịch vụ
 type ServicePackage = {
@@ -24,6 +25,9 @@ type ServiceOption = {
 }
 
 const PricingPage = () => {
+  // State cho menu
+  const [menuOpen, setMenuOpen] = useState(false);
+
   // State cho các gói dịch vụ
   const [packages, setPackages] = useState<ServicePackage[]>([
     {
@@ -255,6 +259,30 @@ const PricingPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Menu Overlay */}
+      <MenuOverlay isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+
+      {/* Vertical Menu Button */}
+      <button
+        onClick={() => setMenuOpen(!menuOpen)}
+        className="fixed right-6 md:right-8 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center"
+      >
+        <div className="vertical-text text-black text-lg md:text-xl uppercase tracking-wider font-medium">
+          {menuOpen ? 'CLOSE' : 'MENU'}
+        </div>
+      </button>
+
+      {/* Add CSS for vertical text */}
+      <style jsx global>{`
+        .vertical-text {
+          writing-mode: vertical-rl;
+          text-orientation: mixed;
+          transform: rotate(180deg);
+          letter-spacing: 0.2em;
+          font-weight: 500;
+        }
+      `}</style>
+
       <header className="fixed inset-x-0 pl-8 top-20 z-50 flex items-center justify-between bg-transparent">
         <div className="hidden md:block">
           <Link

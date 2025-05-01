@@ -1,10 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useState } from 'react';
+import MenuOverlay from '@/components/MenuOverlay';
+import DynamicMenuButton from '@/components/DynamicMenuButton';
+import DynamicLogo from '@/components/DynamicLogo';
 
 export default function ContactPage() {
+  const [menuOpen, setMenuOpen] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -38,19 +41,14 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-black">
-      {/* Header: Logo chính giữa */}
-      <div className="flex justify-center items-center px-6 pt-6">
-        <Image
-          src="/moc_nguyen_production_black.png"
-          alt="MOC Productions Logo"
-          width={180}
-          height={60}
-          className="h-[60px] w-auto object-contain"
-          priority
-        />
-      </div>
-      {/* Menu vertical right */}
-      {/* <div className="fixed right-0 top-10 rotate-90 origin-top-right text-xs font-semibold tracking-widest">MENU</div> */}
+      {/* Menu Overlay */}
+      <MenuOverlay isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+
+      {/* Dynamic Menu Button with color changing based on background */}
+      <DynamicMenuButton menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+
+      {/* Dynamic Logo at top left corner */}
+      <DynamicLogo width={120} height={40} />
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-start px-4 md:px-0">

@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
+    unoptimized: true, // Tắt tối ưu hóa hình ảnh
     remotePatterns: [
       {
         protocol: 'https',
@@ -30,4 +31,4 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig 
+module.exports = nextConfig

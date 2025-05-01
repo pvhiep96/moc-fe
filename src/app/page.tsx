@@ -22,6 +22,7 @@ type Project = {
   images: string[]; // All project images
   video_urls: { url: string }[]; // Project videos
   show_video?: boolean; // Whether to show video instead of images on home page
+  video_vertical: { url: string }; // Vertical video for home page
 };
 
 // Function to extract YouTube video ID from various URL formats
@@ -214,7 +215,7 @@ export default function Home() {
 
     // Handle video
     if (hasVideo && videoUrl) {
-      const videoId = getYouTubeId(videoUrl);
+      // videoUrl là ID trực tiếp từ API
       if (videoPlayersRef.current[projectId]) {
         try {
           const player = videoPlayersRef.current[projectId];
@@ -230,7 +231,7 @@ export default function Home() {
               player.currentTime = timestamp;
             }
           } catch (err) {
-            console.warn('Could not seek to timestamp:', err);
+            // console.warn('Could not seek to timestamp:', err);
           }
 
           try {
@@ -253,10 +254,10 @@ export default function Home() {
               }
             }
           } catch (err) {
-            console.error('Failed to play video:', err);
+            // console.error('Failed to play video:', err);
           }
         } catch (e) {
-          console.error('Failed to access player:', e);
+          // console.error('Failed to access player:', e);
         }
       }
     }
@@ -292,7 +293,7 @@ export default function Home() {
             }
           } catch (err) {
             // Ignore if currentTime is not available
-            console.warn('Could not save timestamp:', err);
+            // console.warn('Could not save timestamp:', err);
           }
 
           // Pause the video
@@ -311,11 +312,11 @@ export default function Home() {
               }
             }
           } catch (err) {
-            console.error('Failed to pause video:', err);
+            // console.error('Failed to pause video:', err);
           }
         }
       } catch (e) {
-        console.error('Failed to access player:', e);
+        // console.error('Failed to access player:', e);
       }
     }
   };
@@ -401,7 +402,7 @@ export default function Home() {
                       project.id,
                       imageCount,
                       Boolean(shouldShowVideo),
-                      shouldShowVideo ? project.video_urls[0].url : undefined
+                      shouldShowVideo ? project.video_vertical.url : undefined
                     )}
                     onMouseLeave={() => handleMouseLeave(project.id, Boolean(shouldShowVideo))}
                   >
@@ -413,7 +414,7 @@ export default function Home() {
                             // Show video with PlyrVideoPlayer on hover
                             <div className="w-full h-full">
                               <PlyrVideoPlayer
-                                videoId={getYouTubeId(project.video_urls[0].url)}
+                                videoId={project.video_vertical.url} // API trả về trực tiếp ID của video
                                 playing={true}
                                 muted={true}
                                 onReady={(player) => {
@@ -425,7 +426,7 @@ export default function Home() {
                             // Show high quality thumbnail when not hovering
                             <div className="absolute inset-0">
                               <Image
-                                src={getHighQualityThumbnail(getYouTubeId(project.video_urls[0].url))}
+                                src={getHighQualityThumbnail(project.video_vertical.url)} // API trả về trực tiếp ID của video
                                 alt={`${project.name} video thumbnail`}
                                 fill
                                 className="object-cover transition-transform duration-500 group-hover:scale-110"

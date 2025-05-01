@@ -26,6 +26,12 @@ type Project = {
   video_urls: { url: string }[];
   show_video?: boolean;
   descriptions: { id: number; content: string; position_display: number }[];
+  ordered_content?: {
+    id: number;
+    type: string;
+    content: string;
+    position: number;
+  }[];
 };
 
 const ProjectDetail = () => {
@@ -416,103 +422,117 @@ const ProjectDetail = () => {
         // Fetch project data from API
         const projectData = await projectsApi.getProject(Number(id) || id);
 
-        // Fetch project with images
-        const projectWithImages = await projectsApi.getProjectWithReloadedImages(Number(id) || id);
-
         // Set project name
         setProjectName(projectData.name ? projectData.name.toUpperCase() : `Project ${id}`);
 
-        // Get images
-        const projectImages = projectWithImages.images || [];
+        // Get images for fallback
+        const projectImages = projectData.images || [];
         setProjectImages(projectImages.map((img: string) => `${img}`));
 
         // Create items array
         const items: ProjectItem[] = [];
 
-        // Add descriptions from the project
-        if (projectData.descriptions && projectData.descriptions.length > 0) {
-          // Sort descriptions by position_display
-          const sortedDescriptions = [...projectData.descriptions].sort((a, b) => a.position_display - b.position_display);
+        // Check if we have ordered content from the API
+        if (projectData.ordered_content && projectData.ordered_content.length > 0) {
+          console.log('Using ordered content from API:', projectData.ordered_content);
 
-          // Get the highest position value from descriptions
-          const maxPosition = Math.max(...sortedDescriptions.map(desc => desc.position_display));
-
-          // Limit the total number of images to be less than maxPosition
-          const limitedImages = projectImages.slice(0, maxPosition - 1);
-
-          // Add descriptions and images in alternating pattern based on position_display
-          let imageIndex = 0;
-          sortedDescriptions.forEach((desc) => {
-            // Add description at its specific position
+          // Map the ordered content to our ProjectItem format
+          projectData.ordered_content.forEach((item) => {
             items.push({
-              type: 'description',
-              content: desc.content,
-              order: desc.position_display
+              type: item.type as 'image' | 'description' | 'video',
+              content: item.content,
+              order: item.position
             });
-
-            // Add images between this description and the next one
-            const nextDescPos = sortedDescriptions.find(d => d.position_display > desc.position_display)?.position_display || Number.MAX_SAFE_INTEGER;
-            const imagesToAdd = nextDescPos - desc.position_display - 1;
-
-            for (let i = 0; i < imagesToAdd && imageIndex < limitedImages.length; i++) {
-              items.push({
-                type: 'image',
-                content: limitedImages[imageIndex],
-                order: desc.position_display + i + 1
-              });
-              imageIndex++;
-            }
           });
         } else {
-          // If no descriptions, only display up to 10 images
-          const maxImages = Math.min(projectImages.length, 10);
-          for (let i = 0; i < maxImages; i++) {
-            items.push({
-              type: 'image',
-              content: projectImages[i],
-              order: i + 1
-            });
-          }
-        }
+          console.log('No ordered content from API, using fallback logic');
 
-        // Lưu trữ tạm thời các video để thêm vào cuối
-        const videoItems: ProjectItem[] = [];
+          // Fallback to old logic if ordered_content is not available
+          // Add descriptions from the project
+          if (projectData.descriptions && projectData.descriptions.length > 0) {
+            // Sort descriptions by position_display
+            const sortedDescriptions = [...projectData.descriptions].sort((a, b) => a.position_display - b.position_display);
 
-        // Add videos if available - improved version
-        if (projectData.video_urls && projectData.video_urls.length > 0) {
-          // Process all videos from the API
-          projectData.video_urls.forEach((videoItem: { url: string }) => {
-            // Extract video ID directly if it's already an ID, or from a full URL
-            const videoId = videoItem.url.includes('youtube.com') || videoItem.url.includes('youtu.be')
-              ? getYouTubeId(videoItem.url)
-              : videoItem.url; // Assume it's already an ID if not a URL
+            // Get the highest position value from descriptions
+            const maxPosition = Math.max(...sortedDescriptions.map(desc => desc.position_display));
 
-            if (videoId) {
-              // Add the video to temporary array
-              videoItems.push({
-                type: 'video',
-                content: `https://www.youtube.com/embed/${videoId}?rel=0&showinfo=0&autoplay=0`,
-                order: 0 // Temporary order, will be updated later
+            // Limit the total number of images to be less than maxPosition
+            const limitedImages = projectImages.slice(0, maxPosition - 1);
+
+            // Add descriptions and images in alternating pattern based on position_display
+            let imageIndex = 0;
+            sortedDescriptions.forEach((desc) => {
+              // Add description at its specific position
+              items.push({
+                type: 'description',
+                content: desc.content,
+                order: desc.position_display
               });
 
-              console.log(`Added video ${videoId} to be placed at the end`);
+              // Add images between this description and the next one
+              const nextDescPos = sortedDescriptions.find(d => d.position_display > desc.position_display)?.position_display || Number.MAX_SAFE_INTEGER;
+              const imagesToAdd = nextDescPos - desc.position_display - 1;
+
+              for (let i = 0; i < imagesToAdd && imageIndex < limitedImages.length; i++) {
+                items.push({
+                  type: 'image',
+                  content: limitedImages[imageIndex],
+                  order: desc.position_display + i + 1
+                });
+                imageIndex++;
+              }
+            });
+          } else {
+            // If no descriptions, only display up to 10 images
+            const maxImages = Math.min(projectImages.length, 10);
+            for (let i = 0; i < maxImages; i++) {
+              items.push({
+                type: 'image',
+                content: projectImages[i],
+                order: i + 1
+              });
             }
-          });
-        }
+          }
 
-        // Sort items by order first
-        items.sort((a, b) => a.order - b.order);
+          // Lưu trữ tạm thời các video để thêm vào cuối
+          const videoItems: ProjectItem[] = [];
 
-        // Now add videos at the end with sequential order numbers
-        if (videoItems.length > 0) {
-          // Start order from the last item's order + 1
-          let startOrder = items.length > 0 ? items[items.length - 1].order + 1 : 1;
+          // Add videos if available - improved version
+          if (projectData.video_urls && projectData.video_urls.length > 0) {
+            // Process all videos from the API
+            projectData.video_urls.forEach((videoItem: { url: string }) => {
+              // Extract video ID directly if it's already an ID, or from a full URL
+              const videoId = videoItem.url.includes('youtube.com') || videoItem.url.includes('youtu.be')
+                ? getYouTubeId(videoItem.url)
+                : videoItem.url; // Assume it's already an ID if not a URL
 
-          videoItems.forEach((videoItem, index) => {
-            videoItem.order = startOrder + index;
-            items.push(videoItem);
-            console.log(`Placed video at the end with order ${videoItem.order}`);
-          });
+              if (videoId) {
+                // Add the video to temporary array
+                videoItems.push({
+                  type: 'video',
+                  content: `https://www.youtube.com/embed/${videoId}?rel=0&showinfo=0&autoplay=0`,
+                  order: 0 // Temporary order, will be updated later
+                });
+
+                console.log(`Added video ${videoId} to be placed at the end`);
+              }
+            });
+          }
+
+          // Sort items by order first
+          items.sort((a, b) => a.order - b.order);
+
+          // Now add videos at the end with sequential order numbers
+          if (videoItems.length > 0) {
+            // Start order from the last item's order + 1
+            let startOrder = items.length > 0 ? items[items.length - 1].order + 1 : 1;
+
+            videoItems.forEach((videoItem, index) => {
+              videoItem.order = startOrder + index;
+              items.push(videoItem);
+              console.log(`Placed video at the end with order ${videoItem.order}`);
+            });
+          }
         }
 
         // Sort by order
@@ -800,13 +820,13 @@ const ProjectDetail = () => {
     // Thiết lập interval để kiểm tra định kỳ (đề phòng các sự kiện khác không được kích hoạt)
     // Sử dụng thời gian dài hơn vì đã có debounce
     const checkInterval = setInterval(() => {
-      console.log('Interval check triggered');
+      // console.log('Interval check triggered');
       calculateCurrentImage(); // Sử dụng phiên bản không debounced để đảm bảo cập nhật
     }, 300);
 
     // Thêm một interval khác để đảm bảo counter được cập nhật
     const forceUpdateInterval = setInterval(() => {
-      console.log('Force update triggered');
+      // console.log('Force update triggered');
       // Gọi trực tiếp setCurrentIndex để cập nhật counter
       const container = sliderRef.current;
       if (container) {
@@ -844,7 +864,7 @@ const ProjectDetail = () => {
 
               // Nếu ảnh hiển thị và có số thứ tự lớn hơn số hiện tại
               if (orderNum > maxVisibleOrder) {
-                console.log(`Item ${orderNum} is visible (${(visiblePercent * 100).toFixed(1)}%) - new max order`);
+                // console.log(`Item ${orderNum} is visible (${(visiblePercent * 100).toFixed(1)}%) - new max order`);
                 maxVisibleOrder = orderNum;
               }
             }
@@ -853,7 +873,7 @@ const ProjectDetail = () => {
 
         // Nếu tìm thấy ảnh hiển thị và số thứ tự khác với số hiện tại
         if (maxVisibleOrder > 0 && maxVisibleOrder !== currentIndex) {
-          console.log(`Force updating index from ${currentIndex} to ${maxVisibleOrder}`);
+          // console.log(`Force updating index from ${currentIndex} to ${maxVisibleOrder}`);
 
           // Thêm hiệu ứng animation mượt mà cho counter
           const counter = document.getElementById('image-counter');
@@ -905,7 +925,7 @@ const ProjectDetail = () => {
       clearInterval(checkInterval);
       clearInterval(forceUpdateInterval);
 
-      console.log('Cleaned up all event listeners and intervals');
+      // console.log('Cleaned up all event listeners and intervals');
     };
   }, [projectItems, currentIndex]);
 

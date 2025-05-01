@@ -65,7 +65,7 @@ const PlyrVideoPlayer = ({
       try {
         player.muted = muted;
       } catch (e) {
-        console.warn('Could not set initial muted state:', e);
+        // console.warn('Could not set initial muted state:', e);
       }
 
       // Play if needed
@@ -73,13 +73,29 @@ const PlyrVideoPlayer = ({
         try {
           player.play();
         } catch (e) {
-          console.warn('Could not autoplay:', e);
+          // console.warn('Could not autoplay:', e);
         }
       }
 
       // Call onReady callback
       if (onReady && playerRef.current) {
         onReady(playerRef.current);
+      }
+    });
+
+    // Xử lý sự kiện khi video kết thúc
+    player.on('ended', () => {
+      // Quay về đầu video
+      try {
+        player.restart();
+      } catch (e) {
+        // Fallback nếu restart không hoạt động
+        try {
+          player.currentTime = 0;
+          player.play();
+        } catch (fallbackError) {
+          // console.warn('Could not restart video:', fallbackError);
+        }
       }
     });
 
@@ -99,7 +115,7 @@ const PlyrVideoPlayer = ({
       try {
         playerRef.current.play();
       } catch (error) {
-        console.error('Error playing video:', error);
+        // console.error('Error playing video:', error);
       }
     } else {
       playerRef.current.pause();
@@ -114,11 +130,11 @@ const PlyrVideoPlayer = ({
       // Plyr sử dụng thuộc tính muted thay vì phương thức mute/unmute
       playerRef.current.muted = muted;
     } catch (error) {
-      console.error('Error changing mute state:', error);
+      // console.error('Error changing mute state:', error);
 
       // Fallback: Thử cách khác nếu cách trên không hoạt động
       try {
-        const iframe = playerRef.current.elements.container.querySelector('iframe');
+        const iframe = playerRef?.current?.elements?.container?.querySelector('iframe');
         if (iframe) {
           // Thêm tham số mute vào URL của iframe
           let src = iframe.src;
@@ -129,7 +145,7 @@ const PlyrVideoPlayer = ({
           iframe.src = src;
         }
       } catch (fallbackError) {
-        console.error('Fallback for mute also failed:', fallbackError);
+        // console.error('Fallback for mute also failed:', fallbackError);
       }
     }
   }, [muted]);

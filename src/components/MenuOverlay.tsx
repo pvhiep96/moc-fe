@@ -12,7 +12,6 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
   const [mounted, setMounted] = useState(false);
 
   // Log when props change
-  console.log('MenuOverlay rendered with isOpen:', isOpen);
 
   useEffect(() => {
     setMounted(true);
@@ -20,10 +19,8 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
     // Disable body scroll when menu is open
     if (isOpen) {
       document.body.style.overflow = 'hidden';
-      console.log('Menu opened');
     } else {
       document.body.style.overflow = '';
-      console.log('Menu closed');
     }
 
     return () => {

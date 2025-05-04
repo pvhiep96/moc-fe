@@ -4,12 +4,17 @@ import { useRouter, useParams } from 'next/navigation'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { projectsApi } from '@/services/api'
 import { getErrorMessage } from '@/utils/errorHandler'
 import LoadingScreen from '@/components/LoadingScreen';
 import MenuOverlay from '@/components/MenuOverlay';
 import DynamicMenuButton from '@/components/DynamicMenuButton';
 import './video.css';
+
+// Lazy load ReactPlayer để tránh lỗi SSR
+// Sử dụng react-player/lazy để hỗ trợ tốt hơn cho môi trường không có third-party cookies
+const ReactPlayer = dynamic(() => import('react-player/lazy'), { ssr: false });
 
 // Định nghĩa kiểu dữ liệu cho các phần tử hiển thị
 type ProjectItem = {
@@ -987,15 +992,24 @@ const ProjectDetail = () => {
     return (
       <div className="w-full py-4 flex justify-center">
         <div className="aspect-video w-full max-w-4xl video-container">
-          <iframe
+          <ReactPlayer
+            url={`https://www.youtube.com/watch?v=${videoId}`}
             width="100%"
             height="100%"
-            src={`https://www.youtube.com/embed/${videoId}?rel=0&showinfo=0&mute=1&controls=1&modestbranding=1`}
-            title="YouTube video player"
-            style={{ border: 0 }}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-          ></iframe>
+            controls={true}
+            playing={false}
+            muted={true}
+            config={{
+              youtube: {
+                playerVars: {
+                  modestbranding: 1,
+                  rel: 0,
+                  showinfo: 0,
+                  origin: typeof window !== 'undefined' ? window.location.origin : ''
+                }
+              }
+            }}
+          />
         </div>
       </div>
     );
@@ -1116,15 +1130,24 @@ const ProjectDetail = () => {
                   className="h-full flex-shrink-0 relative flex items-center justify-center"
                 >
                   <div className="h-full max-h-[80vh] aspect-video video-container">
-                    <iframe
+                    <ReactPlayer
+                      url={`https://www.youtube.com/watch?v=${item.content}`}
                       width="100%"
                       height="100%"
-                      src={`https://www.youtube.com/embed/${item.content}?rel=0&showinfo=0&mute=1&controls=1&modestbranding=1`}
-                      title="YouTube video player"
-                      style={{ border: 0 }}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      allowFullScreen
-                    ></iframe>
+                      controls={true}
+                      playing={false}
+                      muted={true}
+                      config={{
+                        youtube: {
+                          playerVars: {
+                            modestbranding: 1,
+                            rel: 0,
+                            showinfo: 0,
+                            origin: typeof window !== 'undefined' ? window.location.origin : ''
+                          }
+                        }
+                      }}
+                    />
                   </div>
                 </div>
               );

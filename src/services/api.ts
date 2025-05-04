@@ -15,7 +15,6 @@ export const projectsApi = {
   },
   getProjectWithAllImages: async (id: number | string) => {
     const response = await apiClient.get(`${API_V1_PATH}/projects/${id}/full`);
-    console.log(`response: ${JSON.stringify(response.data)}`) 
     return response.data;
   },
   getProjectWithReloadedImages: async (id: number | string) => {

@@ -145,7 +145,7 @@ const ProjectDetail = () => {
 
               // Nếu ảnh hiển thị và có số thứ tự lớn hơn số hiện tại
               if (isVisible && orderNum > maxVisibleOrder) {
-                console.log(`Item ${orderNum} is visible (${(visiblePercent * 100).toFixed(1)}%) - new max order`);
+
                 maxVisibleOrder = orderNum;
               }
             });
@@ -256,7 +256,7 @@ const ProjectDetail = () => {
 
     // Unified scroll handler that will handle both auto-scroll control and index calculation
     const handleUnifiedScroll = () => {
-      console.log('Unified handleScroll called');
+
 
       // Part 1: Auto-scroll control (from first handleScroll)
       // Immediately stop auto-scroll when user manually scrolls
@@ -310,7 +310,7 @@ const ProjectDetail = () => {
 
     // Add event listener to the slider element specifically for both desktop and mobile
     if (sliderRef.current) {
-      console.log('Adding unified scroll event listener to slider');
+
 
       // Sử dụng passive: false để đảm bảo sự kiện không bị bỏ qua
       sliderRef.current.addEventListener('scroll', handleUnifiedScroll, { passive: false });
@@ -431,7 +431,7 @@ const ProjectDetail = () => {
         // Fetch project data from API
         const projectData = await projectsApi.getProject(Number(id) || id);
 
-        console.log(`projectData: ${JSON.stringify(projectData)}`)
+
 
         // Set project name
         setProjectName(projectData.name ? projectData.name.toUpperCase() : `Project ${id}`);
@@ -445,7 +445,7 @@ const ProjectDetail = () => {
 
         // Check if we have ordered content from the API
         if (projectData.ordered_content && projectData.ordered_content.length > 0) {
-          console.log('Using ordered content from API:', projectData.ordered_content);
+
 
           // Map the ordered content to our ProjectItem format
           projectData.ordered_content.forEach((item: OrderedContentItem) => {
@@ -475,7 +475,7 @@ const ProjectDetail = () => {
             }
           });
         } else {
-          console.log('No ordered content from API, using fallback logic');
+
 
           // Fallback to old logic if ordered_content is not available
           // Add descriptions from the project
@@ -542,7 +542,7 @@ const ProjectDetail = () => {
                   order: 0 // Temporary order, will be updated later
                 });
 
-                console.log(`Added video ${videoId} to be placed at the end`);
+
               }
             });
           }
@@ -558,7 +558,7 @@ const ProjectDetail = () => {
             videoItems.forEach((videoItem, index) => {
               videoItem.order = startOrder + index;
               items.push(videoItem);
-              console.log(`Placed video at the end with order ${videoItem.order}`);
+
             });
           }
         }
@@ -572,7 +572,7 @@ const ProjectDetail = () => {
           setLoading(false);
         }, 500);
       } catch (error) {
-        console.error('Error loading project data:', error);
+
         setTimeout(() => setLoading(false), 500);
       }
     }
@@ -632,13 +632,9 @@ const ProjectDetail = () => {
     };
 
     // Sử dụng một cách tiếp cận trực tiếp hơn để phát hiện ảnh hiện tại
-    console.log('Setting up image detection logic');
-
     // Hàm để tính toán ảnh hiện tại dựa trên vị trí cuộn - phiên bản mới
     const calculateCurrentImage = () => {
-      console.log('Calculating current image - new version');
       if (!sliderRef.current) {
-        console.log('sliderRef.current is null');
         return;
       }
 
@@ -653,7 +649,7 @@ const ProjectDetail = () => {
       try {
         // Thêm data-order cho tất cả các ảnh và video nếu cần
         const imageContainers = container.querySelectorAll('.flex-shrink-0.relative.flex.items-center.justify-center');
-        console.log(`Found ${imageContainers.length} potential items`);
+
 
         imageContainers.forEach((el, index) => {
           if (!el.hasAttribute('data-order')) {
@@ -666,13 +662,13 @@ const ProjectDetail = () => {
               el.setAttribute('data-countable', 'false');
             }
 
-            console.log(`Added data-order=${index + 1} to element`);
+
           }
         });
 
         // Lấy tất cả các phần tử có data-order và data-countable="true" (chỉ ảnh)
         const itemElements = document.querySelectorAll('[data-order][data-countable="true"]');
-        console.log(`Found ${itemElements.length} countable items with data-order`);
+
 
         // Kiểm tra từng phần tử
         itemElements.forEach((el) => {
@@ -703,26 +699,26 @@ const ProjectDetail = () => {
 
           // Nếu ảnh hiển thị và có số thứ tự lớn hơn số hiện tại
           if (isVisible && orderNum > maxVisibleOrder) {
-            console.log(`Item ${orderNum} is visible (${(visiblePercent * 100).toFixed(1)}%) - new max order`);
+
             maxVisibleOrder = orderNum;
           }
         });
 
         // Nếu không tìm thấy ảnh nào hiển thị, giữ nguyên số cũ
         if (maxVisibleOrder === 0) {
-          console.log('No visible images found, keeping current index');
+
           return;
         }
 
         // Cập nhật số đếm nếu có thay đổi
         if (maxVisibleOrder !== currentIndex) {
-          console.log(`Updating index from ${currentIndex} to ${maxVisibleOrder}`);
+
           closestOrder = maxVisibleOrder;
         }
 
         // Luôn cập nhật chỉ số để đảm bảo nó luôn phản ánh ảnh hiện tại - sử dụng debounce để tránh cập nhật quá thường xuyên
         if (closestOrder !== currentIndex) {
-          console.log(`Updating index from ${currentIndex} to ${closestOrder}`);
+
 
           // Sử dụng debounce để tránh cập nhật quá thường xuyên
           const updateCounter = debounce(() => {
@@ -774,7 +770,7 @@ const ProjectDetail = () => {
       debouncedCalculateCurrentImage();
 
       // Log để debug
-      console.log('Scroll event triggered');
+
     };
 
     // Đăng ký nhiều sự kiện để đảm bảo phát hiện mọi thay đổi
@@ -810,7 +806,7 @@ const ProjectDetail = () => {
           sliderRef.current.scrollLeft += scrollDelta;
 
           // Gọi phiên bản debounced để cập nhật counter
-          console.log(`${isTouchpad ? 'Touchpad' : 'Mouse wheel'} event triggered`);
+
           debouncedCalculateCurrentImage();
           updateCounterAnimation();
         }
@@ -830,7 +826,7 @@ const ProjectDetail = () => {
         const scrollAmount = (e.scale - 1) * 100;
         sliderRef.current.scrollLeft += scrollAmount;
 
-        console.log('Gesture event triggered');
+
         debouncedCalculateCurrentImage();
         updateCounterAnimation();
       }
@@ -853,13 +849,13 @@ const ProjectDetail = () => {
     // Thiết lập interval để kiểm tra định kỳ (đề phòng các sự kiện khác không được kích hoạt)
     // Sử dụng thời gian dài hơn vì đã có debounce
     const checkInterval = setInterval(() => {
-      // console.log('Interval check triggered');
+
       calculateCurrentImage(); // Sử dụng phiên bản không debounced để đảm bảo cập nhật
     }, 300);
 
     // Thêm một interval khác để đảm bảo counter được cập nhật
     const forceUpdateInterval = setInterval(() => {
-      // console.log('Force update triggered');
+
       // Gọi trực tiếp setCurrentIndex để cập nhật counter
       const container = sliderRef.current;
       if (container) {
@@ -897,7 +893,7 @@ const ProjectDetail = () => {
 
               // Nếu ảnh hiển thị và có số thứ tự lớn hơn số hiện tại
               if (orderNum > maxVisibleOrder) {
-                // console.log(`Item ${orderNum} is visible (${(visiblePercent * 100).toFixed(1)}%) - new max order`);
+
                 maxVisibleOrder = orderNum;
               }
             }
@@ -906,7 +902,7 @@ const ProjectDetail = () => {
 
         // Nếu tìm thấy ảnh hiển thị và số thứ tự khác với số hiện tại
         if (maxVisibleOrder > 0 && maxVisibleOrder !== currentIndex) {
-          // console.log(`Force updating index from ${currentIndex} to ${maxVisibleOrder}`);
+
 
           // Thêm hiệu ứng animation mượt mà cho counter
           const counter = document.getElementById('image-counter');
@@ -958,7 +954,7 @@ const ProjectDetail = () => {
       clearInterval(checkInterval);
       clearInterval(forceUpdateInterval);
 
-      // console.log('Cleaned up all event listeners and intervals');
+
     };
   }, [projectItems, currentIndex]);
 

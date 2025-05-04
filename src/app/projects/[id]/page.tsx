@@ -9,12 +9,23 @@ import { getErrorMessage } from '@/utils/errorHandler'
 import LoadingScreen from '@/components/LoadingScreen';
 import MenuOverlay from '@/components/MenuOverlay';
 import DynamicMenuButton from '@/components/DynamicMenuButton';
+import './video.css';
 
 // Định nghĩa kiểu dữ liệu cho các phần tử hiển thị
 type ProjectItem = {
   type: 'image' | 'description' | 'video'
-  content: string; // URL cho ảnh hoặc nội dung cho description
+  content: string; // URL cho ảnh hoặc nội dung cho description hoặc video ID
   order: number; // Thứ tự hiển thị
+}
+
+// Định nghĩa kiểu dữ liệu cho ordered_content từ API
+type OrderedContentItem = {
+  id: number;
+  type: string; // 'images', 'description', 'video'
+  position: number;
+  image_url?: string; // Cho type 'images'
+  content?: string; // Cho type 'description'
+  url?: string; // Cho type 'video'
 }
 
 // Định nghĩa kiểu dữ liệu cho Project
@@ -28,12 +39,7 @@ type Project = {
   video_urls: { url: string }[];
   show_video?: boolean;
   descriptions: { id: number; content: string; position_display: number }[];
-  ordered_content?: {
-    id: number;
-    type: string;
-    content: string;
-    position: number;
-  }[];
+  ordered_content?: OrderedContentItem[];
 };
 
 const ProjectDetail = () => {
@@ -442,12 +448,31 @@ const ProjectDetail = () => {
           console.log('Using ordered content from API:', projectData.ordered_content);
 
           // Map the ordered content to our ProjectItem format
-          projectData.ordered_content.forEach((item: {type: string, content: string, position: number}) => {
-            items.push({
-              type: item.type as 'image' | 'description' | 'video',
-              content: item.content,
-              order: item.position
-            });
+          projectData.ordered_content.forEach((item: OrderedContentItem) => {
+            // Determine content based on type
+            let content = '';
+            let type: 'image' | 'description' | 'video' = 'image'; // Default
+
+            if (item.type === 'images' && item.image_url) {
+              type = 'image';
+              content = item.image_url;
+            } else if (item.type === 'description' && item.content) {
+              type = 'description';
+              content = item.content;
+            } else if (item.type === 'video' && item.url) {
+              type = 'video';
+              // For videos, extract the YouTube ID if needed
+              content = getYouTubeId(item.url);
+            }
+
+            // Only add item if we have valid content
+            if (content) {
+              items.push({
+                type: type,
+                content: content,
+                order: item.position
+              });
+            }
           });
         } else {
           console.log('No ordered content from API, using fallback logic');
@@ -506,16 +531,14 @@ const ProjectDetail = () => {
           if (projectData.video_urls && projectData.video_urls.length > 0) {
             // Process all videos from the API
             projectData.video_urls.forEach((videoItem: { url: string }) => {
-              // Extract video ID directly if it's already an ID, or from a full URL
-              const videoId = videoItem.url.includes('youtube.com') || videoItem.url.includes('youtu.be')
-                ? getYouTubeId(videoItem.url)
-                : videoItem.url; // Assume it's already an ID if not a URL
+              // Extract video ID using our helper function
+              const videoId = getYouTubeId(videoItem.url);
 
               if (videoId) {
-                // Add the video to temporary array
+                // Add the video to temporary array - store just the ID
                 videoItems.push({
                   type: 'video',
-                  content: `https://www.youtube.com/embed/${videoId}?rel=0&showinfo=0&autoplay=0`,
+                  content: videoId,
                   order: 0 // Temporary order, will be updated later
                 });
 
@@ -561,6 +584,11 @@ const ProjectDetail = () => {
   // Helper function to extract YouTube video ID
   const getYouTubeId = (url: string): string => {
     if (!url) return '';
+
+    // If the URL is already a valid YouTube ID (11 characters), return it directly
+    if (url.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(url)) {
+      return url;
+    }
 
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
@@ -959,22 +987,23 @@ const ProjectDetail = () => {
   );
 
   // Component để hiển thị video
-  const VideoBlock = ({ embedUrl }: { embedUrl: string }) => (
-    <div className="w-full py-4 flex justify-center">
-      <div className="aspect-video w-full max-w-4xl overflow-hidden shadow-xl">
-        <iframe
-          width="100%"
-          height="100%"
-          src={embedUrl}
-          title="YouTube video player"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerPolicy="strict-origin-when-cross-origin"
-          allowFullScreen
-          style={{ border: 0 }}
-        ></iframe>
+  const VideoBlock = ({ videoId }: { videoId: string }) => {
+    return (
+      <div className="w-full py-4 flex justify-center">
+        <div className="aspect-video w-full max-w-4xl video-container">
+          <iframe
+            width="100%"
+            height="100%"
+            src={`https://www.youtube.com/embed/${videoId}?rel=0&showinfo=0&mute=1&controls=1&modestbranding=1`}
+            title="YouTube video player"
+            style={{ border: 0 }}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          ></iframe>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Component HtmlBlock đã được loại bỏ vì không sử dụng
 
@@ -1090,15 +1119,15 @@ const ProjectDetail = () => {
                   data-index={index}
                   className="h-full flex-shrink-0 relative flex items-center justify-center"
                 >
-                  <div className="h-full max-h-[80vh] aspect-video shadow-xl overflow-hidden">
+                  <div className="h-full max-h-[80vh] aspect-video video-container">
                     <iframe
-                      className="w-full h-full"
-                      src={item.content}
+                      width="100%"
+                      height="100%"
+                      src={`https://www.youtube.com/embed/${item.content}?rel=0&showinfo=0&mute=1&controls=1&modestbranding=1`}
                       title="YouTube video player"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      referrerPolicy="strict-origin-when-cross-origin"
-                      allowFullScreen
                       style={{ border: 0 }}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
                     ></iframe>
                   </div>
                 </div>
@@ -1169,7 +1198,7 @@ const ProjectDetail = () => {
               if (item.type === 'description') {
                 return <DescriptionBlock key={`desc-${index}`} content={item.content} />;
               } else if (item.type === 'video') {
-                return <VideoBlock key={`video-${index}`} embedUrl={item.content} />;
+                return <VideoBlock key={`video-${index}`} videoId={item.content} />;
               } else {
                 return (
                   <div

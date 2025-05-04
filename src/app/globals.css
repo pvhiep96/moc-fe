@@ -258,9 +258,11 @@ html {
   width: 100%;
 }
 
-/* Hide all Plyr controls */
+/* Style Plyr controls */
 .plyr--video .plyr__controls {
-  display: none !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+  padding: 10px !important;
+  border-radius: 4px !important;
 }
 
 /* Hide YouTube logo and related videos */

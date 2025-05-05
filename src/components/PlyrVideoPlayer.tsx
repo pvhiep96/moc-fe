@@ -50,7 +50,7 @@ const PlyrVideoPlayer = ({
         disablekb: 1,
         controls: 0,
         autoplay: playing ? 1 : 0,
-        origin: window.location.origin,
+        origin: typeof window !== 'undefined' ? window.location.origin : '',
         // Thêm muted vào URL của YouTube
         mute: muted ? 1 : 0
       }

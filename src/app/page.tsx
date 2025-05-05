@@ -11,7 +11,6 @@ import dynamic from 'next/dynamic';
 // Metadata is defined in app/page.metadata.ts
 
 // Lazy load components to avoid SSR issues
-const PlyrVideoPlayer = dynamic(() => import('@/components/PlyrVideoPlayer'), { ssr: false });
 const MenuOverlay = dynamic(() => import('@/components/MenuOverlay'), { ssr: false });
 const DynamicMenuButton = dynamic(() => import('@/components/DynamicMenuButton'), { ssr: false });
 const DynamicLogo = dynamic(() => import('@/components/DynamicLogo'), { ssr: false });
@@ -27,19 +26,15 @@ type Project = {
   images: string[]; // All project images
   video_urls: { url: string }[]; // Project videos
   show_video?: boolean; // Whether to show video instead of images on home page
-  video_vertical: { url: string }; // Vertical video for home page
+  video_vertical: {
+    url: string;
+    video_url: string;
+    has_uploaded_video: boolean;
+    video_type: 'file' | 'youtube' | null;
+  }; // Vertical video for home page
 };
 
-// Function to extract YouTube video ID from various URL formats
-const getYouTubeId = (url: string): string => {
-  // Try to match ID from various YouTube URL formats
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-  const match = url.match(regExp);
 
-  // Return the ID if found, otherwise return the original string
-  // (might be a direct ID already)
-  return (match && match[2].length === 11) ? match[2] : url;
-};
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -47,7 +42,6 @@ export default function Home() {
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [error, setError] = useState('');
   const [initialLoading, setInitialLoading] = useState(true);
-  const [contentReady, setContentReady] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [hoverStates, setHoverStates] = useState<{[key: number]: number}>({});
   const hoverTimersRef = useRef<{[key: number]: NodeJS.Timeout}>({});
@@ -63,8 +57,6 @@ export default function Home() {
   // Handle hydration
   useEffect(() => {
     setMounted(true);
-
-    // YouTube API is loaded automatically by ReactPlayer
 
     return () => {
       // Clean up
@@ -186,11 +178,7 @@ export default function Home() {
     };
   }, []);
 
-  // Get high quality thumbnail URL for YouTube video
-  const getHighQualityThumbnail = (videoId: string) => {
-    // Use maxresdefault for highest quality, fallback to hqdefault
-    return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-  };
+
 
   // Function to handle mouse enter on a project card
   const handleMouseEnter = (projectId: number, imageCount: number, hasVideo: boolean, videoUrl?: string) => {
@@ -221,49 +209,17 @@ export default function Home() {
 
     // Handle video
     if (hasVideo && videoUrl) {
-      // videoUrl là ID trực tiếp từ API
       if (videoPlayersRef.current[projectId]) {
         try {
           const player = videoPlayersRef.current[projectId];
-          // Resume from saved timestamp if available
-          const timestamp = videoTimestamps.current[projectId] || 0;
 
-          try {
-            // Kiểm tra xem player có phương thức seek không
-            if (typeof player.seek === 'function') {
-              player.seek(timestamp);
-            } else if ('currentTime' in player) {
-              // Fallback: Sử dụng thuộc tính currentTime
-              player.currentTime = timestamp;
-            }
-          } catch (err) {
-            // console.warn('Could not seek to timestamp:', err);
-          }
-
-          try {
-            // Kiểm tra xem player có phương thức play không
-            if (typeof player.play === 'function') {
-              player.play();
-            } else {
-              // Fallback: Thử cách khác nếu không có phương thức play
-              const iframe = player.elements?.container?.querySelector('iframe');
-              if (iframe) {
-                // Thêm tham số autoplay=1 vào URL của iframe
-                let src = iframe.src;
-                if (!src.includes('autoplay=1')) {
-                  src = src.replace('autoplay=0', 'autoplay=1');
-                  if (!src.includes('autoplay=')) {
-                    src += '&autoplay=1';
-                  }
-                  iframe.src = src;
-                }
-              }
-            }
-          } catch (err) {
-            // console.error('Failed to play video:', err);
+          // Play the video
+          if (player instanceof HTMLVideoElement) {
+            player.currentTime = 0;
+            player.play().catch(err => console.error('Video play failed:', err));
           }
         } catch (e) {
-          // console.error('Failed to access player:', e);
+          console.error('Failed to access player:', e);
         }
       }
     }
@@ -339,7 +295,6 @@ export default function Home() {
       <LoadingScreen
         onComplete={() => {
           setInitialLoading(false);
-          setTimeout(() => setContentReady(true), 300); // Add slight delay for smoother transition
         }}
       />
     );
@@ -389,8 +344,9 @@ export default function Home() {
                   : (project.cover_image ? [project.cover_image] : []);
                 const imageCount = projectImages.length;
                 const currentImageIndex = hoverStates[project.id] || 0;
-                const hasVideos = project.video_urls && project.video_urls.length > 0;
-                const shouldShowVideo = project.show_video && hasVideos;
+
+
+                const shouldShowVideo = project.show_video && project.video_vertical?.has_uploaded_video && project.video_vertical?.video_type === 'file';
 
                 return (
                   <Link
@@ -401,39 +357,40 @@ export default function Home() {
                       project.id,
                       imageCount,
                       Boolean(shouldShowVideo),
-                      shouldShowVideo ? project.video_vertical.url : undefined
+                      shouldShowVideo ? project.video_vertical.video_url : undefined
                     )}
                     onMouseLeave={() => handleMouseLeave(project.id, Boolean(shouldShowVideo))}
                   >
                     <div className="relative w-full h-full">
-                      {shouldShowVideo ? (
+                      {shouldShowVideo && project.video_vertical && project.video_vertical.has_uploaded_video ? (
                         // Video container
                         <div className="absolute inset-0 bg-black">
                           {hoverStates[project.id] !== undefined ? (
-                            // Show video with PlyrVideoPlayer on hover
+                            // Show video player on hover
                             <div className="w-full h-full">
-                              <PlyrVideoPlayer
-                                videoId={project.video_vertical.url} // API trả về trực tiếp ID của video
-                                playing={true}
-                                muted={true}
-                                onReady={(player) => {
-                                  videoPlayersRef.current[project.id] = player;
+                              <video
+                                src={project.video_vertical.video_url}
+                                autoPlay
+                                muted
+                                playsInline
+                                loop
+                                className="w-full h-full object-cover"
+                                ref={(el) => {
+                                  if (el) videoPlayersRef.current[project.id] = el;
                                 }}
                               />
                             </div>
                           ) : (
-                            // Show high quality thumbnail when not hovering
+                            // Show thumbnail when not hovering
                             <div className="absolute inset-0">
-                              <Image
-                                src={getHighQualityThumbnail(project.video_vertical.url)} // API trả về trực tiếp ID của video
-                                alt={`${project.name} video thumbnail`}
-                                fill
-                                className="object-cover transition-transform duration-500 group-hover:scale-110"
-                                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 33vw"
-                                quality={95}
-                                priority
-                              />
-
+                              <div className="w-full h-full bg-black">
+                                <video
+                                  src={project.video_vertical.video_url}
+                                  className="w-full h-full object-cover"
+                                  muted
+                                  playsInline
+                                />
+                              </div>
                             </div>
                           )}
                         </div>

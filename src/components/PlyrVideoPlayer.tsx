@@ -145,7 +145,7 @@ const PlyrVideoPlayer = ({
           iframe.src = src;
         }
       } catch (fallbackError) {
-        // console.error('Fallback for mute also failed:', fallbackError);
+        console.error('Fallback for mute also failed:', fallbackError);
       }
     }
   }, [muted]);

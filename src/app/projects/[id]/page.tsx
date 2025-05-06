@@ -984,18 +984,72 @@ const ProjectDetail = () => {
 
   // Component để hiển thị video
   const VideoBlock = ({ videoId }: { videoId: string }) => {
+    // Lấy origin để tránh vấn đề bảo mật
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const [videoError, setVideoError] = useState(false);
+
+    // Xử lý lỗi video
+    const handleVideoError = () => {
+      setVideoError(true);
+    };
+
+    // Xử lý khi video load thành công
+    const handleVideoLoad = () => {
+      setVideoError(false);
+    };
+
+    useEffect(() => {
+      // Thêm event listener để bắt lỗi từ iframe
+      const handleMessage = (event: MessageEvent) => {
+        if (event.origin !== 'https://www.youtube.com') return;
+
+        try {
+          const data = JSON.parse(event.data);
+          if (data.event === 'onError') {
+            setVideoError(true);
+          }
+        } catch (e) {
+          // Ignore parsing errors
+        }
+      };
+
+      window.addEventListener('message', handleMessage);
+
+      return () => {
+        window.removeEventListener('message', handleMessage);
+      };
+    }, []);
+
     return (
       <div className="w-full py-4 flex justify-center">
         <div className="aspect-video w-full max-w-4xl video-container">
-          <iframe
-            width="100%"
-            height="100%"
-            src={`https://www.youtube.com/embed/${videoId}?rel=0&showinfo=0&mute=1&controls=1&modestbranding=1`}
-            title="YouTube video player"
-            style={{ border: 0 }}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-          ></iframe>
+          {videoError ? (
+            <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500">
+              <div className="text-center p-4">
+                <p className="text-lg font-medium mb-2">Video không khả dụng</p>
+                <p className="text-sm">Video này có thể đã bị xóa hoặc đặt ở chế độ riêng tư.</p>
+                <button
+                  className="mt-4 px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition-colors"
+                  onClick={() => setVideoError(false)}
+                >
+                  Thử lại
+                </button>
+              </div>
+            </div>
+          ) : (
+            <iframe
+              width="100%"
+              height="100%"
+              src={`https://www.youtube.com/embed/${videoId}?rel=0&showinfo=0&controls=1&modestbranding=1&enablejsapi=1&origin=${origin}`}
+              title="YouTube video player"
+              style={{ border: 0 }}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              loading="lazy"
+              onError={handleVideoError}
+              onLoad={handleVideoLoad}
+            ></iframe>
+          )}
         </div>
       </div>
     );
@@ -1119,11 +1173,27 @@ const ProjectDetail = () => {
                     <iframe
                       width="100%"
                       height="100%"
-                      src={`https://www.youtube.com/embed/${item.content}?rel=0&showinfo=0&mute=1&controls=1&modestbranding=1`}
+                      src={`https://www.youtube.com/embed/${item.content}?rel=0&showinfo=0&controls=1&modestbranding=1&enablejsapi=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`}
                       title="YouTube video player"
                       style={{ border: 0 }}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                       allowFullScreen
+                      loading="lazy"
+                      onError={(e) => {
+                        // Hiển thị thông báo lỗi
+                        const container = e.currentTarget.parentElement;
+                        if (container) {
+                          const errorDiv = document.createElement('div');
+                          errorDiv.className = 'w-full h-full flex items-center justify-center bg-gray-100 text-gray-500 absolute top-0 left-0';
+                          errorDiv.innerHTML = `
+                            <div class="text-center p-4">
+                              <p class="text-lg font-medium mb-2">Video không khả dụng</p>
+                              <p class="text-sm">Video này có thể đã bị xóa hoặc đặt ở chế độ riêng tư.</p>
+                            </div>
+                          `;
+                          container.appendChild(errorDiv);
+                        }
+                      }}
                     ></iframe>
                   </div>
                 </div>

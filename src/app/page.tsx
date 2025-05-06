@@ -408,7 +408,7 @@ export default function Home() {
                   <Link
                     key={project.id}
                     href={`/projects/${project.id}`}
-                    className="relative block aspect-[9/12] overflow-hidden group"
+                    className="relative block aspect-[4/5] overflow-hidden group"
                     onMouseEnter={() => handleMouseEnter(
                       project.id,
                       imageCount,

@@ -44,9 +44,14 @@ export default function Home() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [hoverStates, setHoverStates] = useState<{[key: number]: number}>({});
+  const [assetsToPreload, setAssetsToPreload] = useState<{images: string[], videos: string[]}>({
+    images: [],
+    videos: []
+  });
   const hoverTimersRef = useRef<{[key: number]: NodeJS.Timeout}>({});
   const videoPlayersRef = useRef<{[key: number]: any}>({});
   const videoTimestamps = useRef<{[key: number]: number}>({});
+  const videoTimestampTimersRef = useRef<{[key: number]: NodeJS.Timeout}>({});
   const autoScrollRef = useRef<NodeJS.Timeout | null>(null);
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isUserActiveRef = useRef(true);
@@ -69,6 +74,43 @@ export default function Home() {
       try {
         const data = await projectsApi.getAllProjects();
         setProjects(data);
+
+        // Collect assets to preload
+        const imagesToPreload: string[] = [];
+        const videosToPreload: string[] = [];
+
+        // Limit to first 6 projects to avoid loading too many assets
+        const projectsToPreload = data.slice(0, 6);
+
+        projectsToPreload.forEach((project: Project) => {
+          // Add cover image and first 2 images from each project
+          if (project.cover_image) {
+            imagesToPreload.push(project.cover_image);
+          }
+
+          if (project.images && project.images.length > 0) {
+            // Add first 2 images from each project
+            project.images.slice(0, 2).forEach((img: string) => {
+              if (img && !imagesToPreload.includes(img)) {
+                imagesToPreload.push(img);
+              }
+            });
+          }
+
+          // Add video if available
+          if (project.show_video &&
+              project.video_vertical?.has_uploaded_video &&
+              project.video_vertical?.video_type === 'file' &&
+              project.video_vertical?.video_url) {
+            videosToPreload.push(project.video_vertical.video_url);
+          }
+        });
+
+        // Update assets to preload
+        setAssetsToPreload({
+          images: imagesToPreload,
+          videos: videosToPreload
+        });
       } catch (err) {
         setError(getErrorMessage(err));
       } finally {
@@ -170,18 +212,21 @@ export default function Home() {
     };
   }, [mounted, projectsLoading]);
 
-  // Cleanup hover timers on unmount
+  // Cleanup timers on unmount
   useEffect(() => {
     return () => {
       // Clear all hover timers when component unmounts
       Object.values(hoverTimersRef.current).forEach(timer => clearInterval(timer));
+
+      // Clear all video timestamp timers when component unmounts
+      Object.values(videoTimestampTimersRef.current).forEach(timer => clearInterval(timer));
     };
   }, []);
 
 
 
   // Function to handle mouse enter on a project card
-  const handleMouseEnter = (projectId: number, imageCount: number, hasVideo: boolean, videoUrl?: string) => {
+  const handleMouseEnter = (projectId: number, imageCount: number, hasVideo: boolean) => {
     // Handle image rotation for projects with multiple images
     if (imageCount > 1) {
       // Clear any existing timer for this project
@@ -208,20 +253,42 @@ export default function Home() {
     }
 
     // Handle video
-    if (hasVideo && videoUrl) {
-      if (videoPlayersRef.current[projectId]) {
-        try {
-          const player = videoPlayersRef.current[projectId];
+    if (hasVideo) {
+      // Sử dụng setTimeout để đảm bảo video player đã được tạo
+      setTimeout(() => {
+        const player = videoPlayersRef.current[projectId];
+        if (player && player instanceof HTMLVideoElement) {
+          try {
+            // Sử dụng timestamp đã lưu nếu có
+            if (videoTimestamps.current[projectId] !== undefined) {
+              // Đảm bảo timestamp hợp lệ (không âm và không vượt quá thời lượng video)
+              const timestamp = Math.max(0, videoTimestamps.current[projectId]);
+              if (timestamp <= player.duration) {
+                player.currentTime = timestamp;
+              }
+            }
 
-          // Play the video
-          if (player instanceof HTMLVideoElement) {
-            player.currentTime = 0;
+            // Phát video
             player.play().catch(err => console.error('Video play failed:', err));
+
+            // Bắt đầu interval để liên tục cập nhật timestamp
+            // Dọn dẹp interval cũ nếu có
+            if (videoTimestampTimersRef.current[projectId]) {
+              clearInterval(videoTimestampTimersRef.current[projectId]);
+            }
+
+            // Tạo interval mới để cập nhật timestamp mỗi 100ms
+            videoTimestampTimersRef.current[projectId] = setInterval(() => {
+              if (player && !player.paused && player.currentTime > 0) {
+                // Lưu timestamp hiện tại + 0.1s để bù đắp cho độ trễ
+                videoTimestamps.current[projectId] = Math.min(player.currentTime + 0.1, player.duration);
+              }
+            }, 100);
+          } catch (e) {
+            console.error('Failed to play video:', e);
           }
-        } catch (e) {
-          console.error('Failed to access player:', e);
         }
-      }
+      }, 50);
     }
   };
 
@@ -242,43 +309,29 @@ export default function Home() {
     // Handle video pause and save timestamp
     if (hasVideo) {
       try {
+        // Dừng interval cập nhật timestamp
+        if (videoTimestampTimersRef.current[projectId]) {
+          clearInterval(videoTimestampTimersRef.current[projectId]);
+          delete videoTimestampTimersRef.current[projectId];
+        }
+
         const player = videoPlayersRef.current[projectId];
-        if (player) {
-          // Save current timestamp before pausing
+        if (player && player instanceof HTMLVideoElement) {
+          // Tạm dừng video - timestamp đã được cập nhật liên tục bởi interval
           try {
-            // Kiểm tra xem player có thuộc tính currentTime không
-            if ('currentTime' in player) {
-              videoTimestamps.current[projectId] = player.currentTime;
-            } else if (typeof player.getCurrentTime === 'function') {
-              // Fallback: Sử dụng phương thức getCurrentTime nếu có
-              videoTimestamps.current[projectId] = player.getCurrentTime();
-            }
+            player.pause();
           } catch (err) {
-            // Ignore if currentTime is not available
-            // console.warn('Could not save timestamp:', err);
+            console.error('Failed to pause video:', err);
           }
 
-          // Pause the video
-          try {
-            // Kiểm tra xem player có phương thức pause không
-            if (typeof player.pause === 'function') {
-              player.pause();
-            } else {
-              // Fallback: Thử cách khác nếu không có phương thức pause
-              const iframe = player.elements?.container?.querySelector('iframe');
-              if (iframe) {
-                // Lưu URL hiện tại và thay thế autoplay=1 bằng autoplay=0
-                let src = iframe.src;
-                src = src.replace('autoplay=1', 'autoplay=0');
-                iframe.src = src;
-              }
-            }
-          } catch (err) {
-            // console.error('Failed to pause video:', err);
+          // Không cần lưu timestamp ở đây vì đã được cập nhật liên tục bởi interval
+          // Nếu muốn đảm bảo, có thể kiểm tra xem timestamp đã được cập nhật chưa
+          if (videoTimestamps.current[projectId] === undefined && player.currentTime > 0) {
+            videoTimestamps.current[projectId] = player.currentTime;
           }
         }
       } catch (e) {
-        // console.error('Failed to access player:', e);
+        console.error('Failed to access player:', e);
       }
     }
   };
@@ -296,6 +349,9 @@ export default function Home() {
         onComplete={() => {
           setInitialLoading(false);
         }}
+        preloadAssets={assetsToPreload.images.length > 0 || assetsToPreload.videos.length > 0}
+        imagesToPreload={assetsToPreload.images}
+        videosToPreload={assetsToPreload.videos}
       />
     );
   }
@@ -356,8 +412,7 @@ export default function Home() {
                     onMouseEnter={() => handleMouseEnter(
                       project.id,
                       imageCount,
-                      Boolean(shouldShowVideo),
-                      shouldShowVideo ? project.video_vertical.video_url : undefined
+                      Boolean(shouldShowVideo)
                     )}
                     onMouseLeave={() => handleMouseLeave(project.id, Boolean(shouldShowVideo))}
                   >
@@ -365,34 +420,57 @@ export default function Home() {
                       {shouldShowVideo && project.video_vertical && project.video_vertical.has_uploaded_video ? (
                         // Video container
                         <div className="absolute inset-0 bg-black">
-                          {hoverStates[project.id] !== undefined ? (
-                            // Show video player on hover
-                            <div className="w-full h-full">
-                              <video
-                                src={project.video_vertical.video_url}
-                                autoPlay
-                                muted
-                                playsInline
-                                loop
-                                className="w-full h-full object-cover"
-                                ref={(el) => {
-                                  if (el) videoPlayersRef.current[project.id] = el;
-                                }}
-                              />
-                            </div>
-                          ) : (
-                            // Show thumbnail when not hovering
-                            <div className="absolute inset-0">
-                              <div className="w-full h-full bg-black">
-                                <video
-                                  src={project.video_vertical.video_url}
-                                  className="w-full h-full object-cover"
-                                  muted
-                                  playsInline
-                                />
-                              </div>
-                            </div>
-                          )}
+                          <div className="w-full h-full">
+                            <video
+                              src={project.video_vertical.video_url}
+                              muted
+                              playsInline
+                              loop
+                              preload="auto"
+                              className="w-full h-full object-cover"
+                              ref={(el) => {
+                                if (el) {
+                                  videoPlayersRef.current[project.id] = el;
+                                  // Khi không hover, hiển thị frame tại thời điểm đã lưu hoặc frame đầu tiên
+                                  if (!hoverStates[project.id]) {
+                                    if (videoTimestamps.current[project.id] !== undefined) {
+                                      // Đảm bảo timestamp hợp lệ (không âm và không vượt quá thời lượng video)
+                                      const timestamp = Math.max(0, videoTimestamps.current[project.id]);
+                                      // Chỉ đặt currentTime khi video đã tải xong metadata
+                                      const setTimestamp = () => {
+                                        if (timestamp <= el.duration) {
+                                          el.currentTime = timestamp;
+                                        }
+                                      };
+
+                                      if (el.readyState >= 1) {
+                                        setTimestamp();
+                                      } else {
+                                        // Nếu video chưa tải xong metadata, đăng ký sự kiện loadedmetadata
+                                        el.addEventListener('loadedmetadata', setTimestamp, { once: true });
+                                      }
+                                    } else {
+                                      // Nếu chưa có timestamp, đặt thời điểm là 0.1s để hiển thị frame đầu tiên
+                                      const setInitialFrame = () => {
+                                        el.currentTime = 0.1;
+                                      };
+
+                                      if (el.readyState >= 1) {
+                                        setInitialFrame();
+                                      } else {
+                                        el.addEventListener('loadedmetadata', setInitialFrame, { once: true });
+                                      }
+                                    }
+                                  }
+
+                                  // Đảm bảo video đã tải
+                                  if (el.readyState === 0) {
+                                    el.load();
+                                  }
+                                }
+                              }}
+                            />
+                          </div>
                         </div>
                       ) : projectImages.length > 0 ? (
                         <>

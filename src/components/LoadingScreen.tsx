@@ -36,7 +36,9 @@ export default function LoadingScreen({
           const scaledProgress = 30 + (assetProgress * 0.6);
           setProgress(scaledProgress);
         }
-      }
+      },
+      fullVideoPreload: true, // Preload toàn bộ video
+      useCache: true // Sử dụng cache
     }
   );
 

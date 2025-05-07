@@ -431,6 +431,7 @@ export default function Home() {
                               ref={(el) => {
                                 if (el) {
                                   videoPlayersRef.current[project.id] = el;
+
                                   // Khi không hover, hiển thị frame tại thời điểm đã lưu hoặc frame đầu tiên
                                   if (!hoverStates[project.id]) {
                                     if (videoTimestamps.current[project.id] !== undefined) {
@@ -463,9 +464,46 @@ export default function Home() {
                                     }
                                   }
 
-                                  // Đảm bảo video đã tải
-                                  if (el.readyState === 0) {
-                                    el.load();
+                                  // Kiểm tra xem video đã được cache chưa
+                                  const videoUrl = project.video_vertical.video_url;
+                                  const isCached = localStorage.getItem('moc_video_cache') &&
+                                    JSON.parse(localStorage.getItem('moc_video_cache') || '{}')[videoUrl];
+
+                                  // Nếu video đã được cache, sử dụng cache
+                                  if (isCached) {
+                                    // Đảm bảo video đã tải
+                                    if (el.readyState < 1) {
+                                      el.load();
+                                    }
+                                  } else {
+                                    // Nếu chưa cache, tải video và thêm vào cache
+
+                                    // Đảm bảo video đã tải
+                                    if (el.readyState === 0) {
+                                      el.load();
+                                    }
+
+                                    // Thêm sự kiện để cache video khi đã tải đủ
+                                    const cacheVideo = () => {
+                                      try {
+                                        const cacheData = localStorage.getItem('moc_video_cache');
+                                        const cache = cacheData ? JSON.parse(cacheData) : {};
+
+                                        // Cập nhật cache
+                                        cache[videoUrl] = {
+                                          timestamp: Date.now(),
+                                          version: 'v1'
+                                        };
+
+                                        // Lưu lại vào localStorage
+                                        localStorage.setItem('moc_video_cache', JSON.stringify(cache));
+                                      } catch (error) {
+                                        console.error('Error caching video:', error);
+                                      }
+                                    };
+
+                                    // Đăng ký sự kiện canplaythrough để cache khi video đã tải đủ
+                                    el.addEventListener('canplaythrough', cacheVideo, { once: true });
                                   }
                                 }
                               }}

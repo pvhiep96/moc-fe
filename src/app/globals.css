@@ -18,7 +18,38 @@
     --foreground: #ededed;
   }
 }
+@font-face {
+  font-family: 'Lexend Exa';
+  src: url('/Lexend_Exa/LexendExa-VariableFont_wght.ttf') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
+@font-face {
+  font-family: 'Raleway';
+  src: url('/Raleway/Raleway-Bold.ttf') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Amaranth';
+  src: url('/Amaranth/Amaranth-Regular.ttf') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Nếu cần dùng Sorts Mill Goudy, bạn có thể thêm tương tự */
+@font-face {
+  font-family: 'Sorts Mill Goudy';
+  src: url('/Sorts_Mill_Goudy/SortsMillGoudy-Regular.ttf') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 body {
   background: var(--background);
   color: var(--foreground);

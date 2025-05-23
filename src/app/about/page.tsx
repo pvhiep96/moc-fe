@@ -1,273 +1,209 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
-import MenuOverlay from '@/components/MenuOverlay';
-import DynamicMenuButton from '@/components/DynamicMenuButton';
-import DynamicLogo from '@/components/DynamicLogo';
 
 export default function AboutPage() {
-  const [scrollY, setScrollY] = useState(0);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  // Handle scroll event to create parallax and fade-in effects
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-    };
-
-    // Add scroll event listener
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Check if element is in viewport for fade-in effect
-  useEffect(() => {
-    const observerOptions = {
-      root: null,
-      rootMargin: '0px',
-      threshold: 0.1
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('animate-fadeIn');
-        }
-      });
-    }, observerOptions);
-
-    // Observe all section refs
-    sectionRefs.current.forEach(ref => {
-      if (ref) observer.observe(ref);
-    });
-
-    return () => {
-      sectionRefs.current.forEach(ref => {
-        if (ref) observer.unobserve(ref);
-      });
-    };
-  }, []);
-
   return (
-    <div className="bg-white text-black min-h-screen">
-      {/* Menu Overlay */}
-      <MenuOverlay isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
-
-      {/* Dynamic Menu Button with color changing based on background */}
-      <DynamicMenuButton menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
-
-      {/* Dynamic Logo at top left corner */}
-      <DynamicLogo width={120} height={40} />
-
-      {/* Hero Section */}
-      <div
-        className="w-full h-screen relative overflow-hidden"
-        style={{
-          transform: `translateY(${scrollY * 0.4}px)`,
-          transition: 'transform 0.1s ease-out'
-        }}
-      >
-        <Image
-          src="/about1.jpg"
-          alt="About Hero"
-          fill
-          className="object-cover w-full h-full"
-          priority
-          style={{
-            transform: `scale(${1 + scrollY * 0.0005})`,
-            transition: 'transform 0.1s ease-out'
-          }}
-        />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <h1 className="text-6xl md:text-8xl font-bold text-white drop-shadow-lg tracking-tight">
-            ABOUT US
-          </h1>
+    <div className="bg-[#f7f7f7] min-h-screen text-black font-sans">
+      {/* Header */}
+      <div className="pt-8 md:pt-16 pb-4 md:pb-8 px-4 md:pl-[100px] flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-8 mb-[30px]">
+        <h1
+          className="text-4xl md:text-6xl font-bold tracking-tight"
+          style={{ fontFamily: "'Lexend Exa', sans-serif" }}
+        >
+          ABOUT US
+        </h1>
+        <div className="border-l border-black h-10 mx-4 hidden md:block" />
+        <div>
+          <div
+            className="text-lg md:text-2xl font-medium uppercase tracking-wide"
+            style={{ fontFamily: "'Lexend Exa', sans-serif" }}
+          >
+            HUSBAND AND WIFE<br />WEDDING DUO
+          </div>
         </div>
-
       </div>
 
-      {/* Introduction Section */}
+      {/* Nội dung chính với đường kẻ dọc bên trái */}
+      <div className="relative max-w-[95%] md:max-w-[80%] mx-auto px-4 md:pl-[100px]">
+        {/* Đường kẻ dọc bên trái */}
+        <div className="absolute left-0 top-0 h-full border-l border-black hidden md:block" style={{ width: 1, minHeight: 600, zIndex: 0 }} />
+
+        {/* Nội dung chính */}
+        <div className="relative z-10 flex flex-col gap-8 md:gap-1" style={{ fontFamily: "'Amaranth', sans-serif" }}>
+          {/* Moc */}
+          <div className="flex flex-col md:flex-row md:items-start gap-4 md:gap-1">
+            <div className="flex-1 order-2 md:order-1">
+              <div className="text-sm/6 text-gray-800 mb-6 w-full md:w-[428px]" style={{lineHeight: '1.7'}}>
+                Capturing love with soul, through the eyes of cinema and the heart of an artist.<br /><br />
+                He is a film nerd and music lover at heart, and a storyteller who sees beauty in the details most people overlook. With a deep sensitivity to emotion naturally, he read the energy of a room easily, noticing the unspoken moments, the subtle shifts in mood, the quiet gestures that speak volumes.<br /><br />
+                Maybe it's the perfectionist in him (yes, he's an OCD), but Moc believes every frame should be crafted not just to look beautiful, but to hold meaning.<br /><br />
+                Moc is most drawn to the subtle moments: a soft touch, a teary smile, a shared glance. He has a deep respect for the trust couples place in him, and approaches each wedding with sensitivity, intention, and soul.
+              </div>
+            </div>
+            <div className="flex flex-col items-center flex-shrink-0 order-1 md:order-2">
+              <div className="w-full md:w-100 aspect-[4/5] relative mb-2">
+                <Image
+                  src="/about-moc.png"
+                  alt="Moc - Co-Founder, Film Director"
+                  fill
+                  className="object-cover grayscale"
+                  sizes="(max-width: 768px) 100vw, 70vw"
+                />
+              </div>
+              <div className="text-xs text-center text-gray-500 mb-4">MOC • Co-Founder, Film Director</div>
+            </div>
+          </div>
+          {/* Vy */}
+          <div className="flex flex-col md:flex-row md:items-start md:h-[428px]">
+            <div className="flex flex-col items-center flex-shrink-0 order-1 md:order-1 h-full flex flex-col justify-end">
+              <div className="w-full md:w-100 aspect-[4/5] relative mb-2 flex justify-center items-center align-center">
+                <Image
+                  src="/about-vy.png"
+                  alt="Vy - Co-Founder, Art Director"
+                  fill
+                  className="object-cover grayscale"
+                  sizes="(max-width: 768px) 100vw, 424px"
+                />
+              </div>
+              <div className="text-xs text-center text-gray-500 mt-1">VY • Co-Founder, Art Director</div>
+            </div>
+            <div className="flex-1 order-2 md:order-2 h-full flex flex-col justify-end items-end">
+              <div className="text-sm/6 text-gray-800 text-right w-full md:w-[450px]" style={{lineHeight: '1.7'}}>
+                As a mother, a woman rooted in family, and a lover of fashion and beauty, she understands how much this day means not only to the bride but to everyone who holds her close.<br /><br />
+                With that understanding, her approach to weddings blends editorial elegance with heartfelt documentary. She pays attention to the little things that matter: the textures, the styling, the energy in the room, allowing each moment to unfold naturally while preserving its timeless charm.<br /><br />
+                Whether your wedding is kissed by the golden glow sunset or wrapped in the moody romance reception, they are here to preserve not just how it looked, but how it felt.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quote */}
       <div
-        ref={(el: HTMLDivElement | null) => { sectionRefs.current[0] = el; }}
-        className="w-full max-w-6xl mx-auto px-4 py-24 opacity-0 transition-opacity duration-1000"
+        className="max-w-3xl mx-auto text-center text-lg md:text-xl mt-[40px] md:mt-[70px] py-4 md:py-8 px-4"
+        style={{ fontFamily: "'Sorts Mill Goudy', serif" }}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+        "Two Hearts, One Vision — Capturing Love for Over a Decade"
+      </div>
+
+      {/* Awards */}
+      <div className="pt-8 md:pt-16 pb-4 md:pb-8 px-4 md:pl-[100px]">
+        <h1
+          className="text-4xl md:text-5xl font-bold mb-6"
+          style={{ fontFamily: "'Lexend Exa', sans-serif" }}
+        >
+          AWARDS
+        </h1>
+      </div>
+      <div className="relative max-w-[95%] md:max-w-[80%] mx-auto px-4 md:pl-[100px]">
+        {/* Đường kẻ dọc bên trái */}
+        <div className="absolute left-0 top-0 h-full border-l border-black hidden md:block" style={{ width: 1, minHeight: 60, zIndex: 0 }} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-base" style={{ fontFamily: "'Amaranth', sans-serif" }}>
           <div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-8 leading-tight">
-              LOVE IS A <br />
-              PURPOSEFUL,<br />
-              SHARED <br />
-              EXCHANGE
-            </h2>
-            <p className="text-lg text-gray-700 mb-6">
-              MOC Productions hướng đến việc lưu giữ những khoảnh khắc chân thực, nghệ thuật và đầy cảm xúc cho mỗi khách hàng.
-            </p>
-            <p className="text-lg text-gray-700">
-              Chúng tôi tin rằng mỗi khoảnh khắc đều có một câu chuyện riêng, và nhiệm vụ của chúng tôi là kể lại câu chuyện đó một cách trọn vẹn nhất.
-            </p>
+            <div className="flex items-center gap-2 mb-2">🏆 WEVA 2017 Judges</div>
+            <div className="flex items-center gap-2 mb-2">🏆 Junebug Weddings 2024 Choice Awards</div>
           </div>
-          <div className="relative h-[70vh] max-h-[600px] overflow-hidden">
-            <Image
-              src="/about2.jpg"
-              alt="About Us"
-              fill
-              className="object-cover rounded-lg"
-              style={{
-                transform: `translateY(${(scrollY - 500) * 0.1}px)`,
-                transition: 'transform 0.1s ease-out'
-              }}
-            />
+          <div>
+            <div className="flex items-center gap-2 mb-2">🏆 Luxuo 2023's Best Wedding Videographer</div>
+            <div className="flex items-center gap-2 mb-2">🏆 Vietnam Wedding Awards 2024's Cinematographer</div>
           </div>
         </div>
       </div>
 
-      {/* Our Story Section */}
-      <div
-        ref={(el: HTMLDivElement | null) => { sectionRefs.current[1] = el; }}
-        className="w-full max-w-6xl mx-auto px-4 py-24 opacity-0 transition-opacity duration-1000"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-          <div className="order-2 md:order-1 relative h-[70vh] max-h-[600px] overflow-hidden">
-            <Image
-              src="/about3.jpg"
-              alt="Our Story"
-              fill
-              className="object-cover rounded-lg"
-              style={{
-                transform: `translateY(${(scrollY - 1000) * 0.1}px)`,
-                transition: 'transform 0.1s ease-out'
-              }}
-            />
-          </div>
-          <div className="order-1 md:order-2">
-            <h2 className="text-4xl md:text-5xl font-bold mb-8 leading-tight">OUR STORY</h2>
-            <p className="text-lg text-gray-700 mb-6">
-              Chúng tôi bắt đầu hành trình của mình với niềm đam mê chụp ảnh và kể chuyện. Mỗi bức ảnh là một câu chuyện, một khoảnh khắc được lưu giữ mãi mãi.
-            </p>
-            <p className="text-lg text-gray-700">
-              THAT IS WHY WE'VE TURNED OUR LOVE OF BEAUTY INTO AN EXQUISITE LIFE, THAT OF YOUR WEDDING PHOTOGRAPHERS.
-            </p>
-          </div>
-        </div>
+      {/* Featured */}
+      <div className="pt-8 md:pt-16 pb-4 md:pb-8 px-4 md:pl-[100px]">
+        <h2
+          className="text-4xl md:text-5xl font-bold"
+          style={{ fontFamily: "'Lexend Exa', sans-serif" }}
+        >
+          FEATURED
+        </h2>
       </div>
-
-      {/* Team Section */}
-      <div
-        ref={(el: HTMLDivElement | null) => { sectionRefs.current[2] = el; }}
-        className="w-full max-w-6xl mx-auto px-4 py-24 opacity-0 transition-opacity duration-1000"
-      >
-        <h2 className="text-4xl md:text-5xl font-bold mb-16 text-center">OUR TEAM</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
-          <div className="flex flex-col items-center">
-            <div className="relative w-full h-[500px] mb-6 overflow-hidden">
+      <div className="relative max-w-[95%] md:max-w-[80%] mx-auto px-4 md:pl-[100px]">
+        {/* Đường kẻ dọc bên trái */}
+        <div className="absolute left-0 top-0 h-full border-l border-black hidden md:block" style={{ width: 1, maxHeight: 90, zIndex: 0 }} />
+        <div className="relative flex flex-col md:flex-row justify-between items-start min-h-[500px]" style={{minHeight: 500}}>
+          {/* Ảnh vuông bên phải */}
+          <div className="flex flex-col items-center md:items-end flex-1 mb-8 md:mb-0">
+            <div className="flex justify-center items-start">
               <Image
-                src="/about2.jpg"
-                alt="Photographer 1"
-                fill
-                className="object-cover rounded-lg"
-                style={{
-                  transform: `scale(${1 + ((scrollY - 1500) * 0.0002)})`,
-                  transition: 'transform 0.1s ease-out'
-                }}
+                src="/featured2.png"
+                alt="Featured 2"
+                width={467}
+                height={623}
+                className="object-cover grayscale w-full md:w-[70%]"
               />
             </div>
-            <div className="font-bold text-2xl mb-2">PIERMARCO</div>
-            <div className="text-sm text-gray-500 mb-4 uppercase tracking-widest">Founder & Photographer</div>
-            <div className="text-lg text-gray-700 text-center max-w-md">
-              Sáng lập, nhiếp ảnh gia chính, với hơn 10 năm kinh nghiệm trong lĩnh vực ảnh cưới và sự kiện quốc tế.
+          </div>
+          {/* 4 chữ ở giữa */}
+          <div className="relative md:absolute flex flex-col items-center z-10 mb-8 md:mb-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-4 text-lg font-bold min-w-[280px] md:min-w-[420px]">
+              <a
+                href="https://luxuo.vn/wedding/vietnam-luxury-wedding-list-3-moc-nguyen-nhin-ra-the-gioi-de-biet-minh-dang-o-dau.html"
+                className="underline hover:text-gray-600"
+                style={{ fontFamily: "'Raleway', sans-serif" }}
+              >
+                Luxuo
+              </a>
+              <a
+                href="https://www.wowweekend.vn/vi/blog/Moc-Nguyen-Khi-phim-cuoi-cung-la-tac-pham-nghe-thuat-2307?fbclid=IwY2xjawKbc7VleHRuA2FlbQIxMABicmlkETE5cGVtWmI3WjJXVnYxQzQ2AR6jgcSr9io39au6wAwE4niBoueXZ8FrnFg6Kzd631I4Rd_J31ATmTnurJCQ0g_aem_t3WjxFPp8KxV2eXGbtmpjg"
+                className="underline hover:text-gray-600"
+                style={{ fontFamily: "'Raleway', sans-serif" }}
+              >
+                Wow Weekend
+              </a>
+              <a
+                href="https://www.lofficielvietnam.com/wedding-symphony/moc-nguyen-chung-ta-co-the-chieu-khach-hang-chieu-ca-cai-toi-cua-minh?fbclid=IwY2xjawKbc7RleHRuA2FlbQIxMABicmlkETE5cGVtWmI3WjJXVnYxQzQ2AR73A7XC-cCrGwYDfNvj1v6snHuguYx0M7-pBh_WUubb1c_sh-Ay8IdI4o3XZw_aem_ezvlEAYCS0DxaIsA19BFdw"
+                className="underline hover:text-gray-600"
+                style={{ fontFamily: "'Raleway', sans-serif" }}
+              >
+                Wedding Symphony
+              </a>
+              <a
+                href="https://bazaarvietnam.vn/nhan-vat/hoang-nguyen-dien-anh-hoa-nhung-thuoc-phim-cho-ngay-chung-doi/?fbclid=IwY2xjawKbc7VleHRuA2FlbQIxMABicmlkETE5cGVtWmI3WjJXVnYxQzQ2AR6IIDNwoy50Hrk-DUT0dYfMZlOjrDlobGht3gIlhL-XWooxsVcUdZN8d_CbcQ_aem_dZaarDnn7iZ9m8ie9zsnfA"
+                className="underline hover:text-gray-600"
+                style={{ fontFamily: "'Raleway', sans-serif" }}
+              >
+                Harper Bazaar
+              </a>
             </div>
           </div>
-          <div className="flex flex-col items-center">
-            <div className="relative w-full h-[500px] mb-6 overflow-hidden">
+          {/* Ảnh ngang bên trái phía dưới */}
+          <div className="relative md:absolute left-0 bottom-0 w-full md:w-1/2" style={{zIndex: 1}}>
+            <div className="w-full aspect-video relative">
               <Image
-                src="/about3.jpg"
-                alt="Photographer 2"
+                src="/featured1.png"
+                alt="Featured 1"
                 fill
-                className="object-cover rounded-lg"
-                style={{
-                  transform: `scale(${1 + ((scrollY - 1500) * 0.0002)})`,
-                  transition: 'transform 0.1s ease-out'
-                }}
+                className="object-cover grayscale"
               />
             </div>
-            <div className="font-bold text-2xl mb-2">MARIA</div>
-            <div className="text-sm text-gray-500 mb-4 uppercase tracking-widest">Photographer</div>
-            <div className="text-lg text-gray-700 text-center max-w-md">
-              Đam mê kể chuyện qua hình ảnh, luôn tìm kiếm những khoảnh khắc tự nhiên và cảm xúc nhất cho khách hàng.
-            </div>
           </div>
         </div>
-      </div>
-
-      {/* Published In Section */}
-      <div
-        ref={(el: HTMLDivElement | null) => { sectionRefs.current[3] = el; }}
-        className="w-full max-w-6xl mx-auto px-4 py-24 opacity-0 transition-opacity duration-1000"
-      >
-        <h2 className="text-4xl md:text-5xl font-bold mb-16 text-center">WE ARE PUBLISHED IN</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
-          <div className="flex flex-col items-center justify-center">
-            <span className="text-2xl font-semibold text-gray-800 hover:text-gray-600 transition-colors cursor-pointer">VOGUE</span>
-          </div>
-          <div className="flex flex-col items-center justify-center">
-            <span className="text-2xl font-semibold text-gray-800 hover:text-gray-600 transition-colors cursor-pointer">LOVER MOON</span>
-          </div>
-          <div className="flex flex-col items-center justify-center">
-            <span className="text-2xl font-semibold text-gray-800 hover:text-gray-600 transition-colors cursor-pointer">BAZAAR</span>
-          </div>
-          <div className="flex flex-col items-center justify-center">
-            <span className="text-2xl font-semibold text-gray-800 hover:text-gray-600 transition-colors cursor-pointer">VANITY FAIR</span>
-          </div>
-        </div>
-      </div>
-
-      {/* CTA Section */}
-      <div
-        ref={(el: HTMLDivElement | null) => { sectionRefs.current[4] = el; }}
-        className="w-full max-w-6xl mx-auto px-4 py-24 opacity-0 transition-opacity duration-1000 text-center"
-      >
-        <h2 className="text-4xl md:text-5xl font-bold mb-8">READY TO WORK WITH US?</h2>
-        <p className="text-lg text-gray-700 mb-12 max-w-2xl mx-auto">
-          Chúng tôi luôn sẵn sàng lắng nghe và hiện thực hóa những ý tưởng của bạn. Hãy liên hệ với chúng tôi để biết thêm chi tiết.
-        </p>
-        <Link href="/contact" className="inline-flex items-center gap-2 text-2xl font-bold group border-b-2 border-black pb-1 hover:translate-x-1 transition-transform">
-          CHECK AVAILABILITY
-          <span className="ml-2 text-3xl group-hover:translate-x-1 transition-transform">→</span>
-        </Link>
       </div>
 
       {/* Footer */}
-      <footer className="w-full py-12 border-t border-gray-200">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex justify-center mb-4">
-            <Image
-              src="/moc_nguyen_production_black.png"
-              alt="MOC Productions Logo"
-              width={250}
-              height={80}
-              className="w-[250px] h-auto"
-            />
-          </div>
-          <div className="text-sm text-gray-500 text-center">
-            ©2025 MOC PRODUCTIONS - ALL RIGHTS RESERVED
-          </div>
+      <div
+        className="w-full text-center text-[12px] py-4 md:py-8 mt-[40px] md:mt-[80px] font-bold"
+        style={{ fontFamily: "'Lexend Exa', sans-serif" }}
+      >
+        FOLLOW US ON SOCIAL
+        <div className="flex justify-center gap-4 mt-4">
+          <a href="https://www.facebook.com/mocnguyen.productions" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+            {/* Facebook SVG */}
+            <svg width="24" height="24" fill="currentColor" className="text-black hover:text-blue-600 transition">
+              <path d="M22 12c0-5.522-4.477-10-10-10S2 6.478 2 12c0 4.991 3.657 9.128 8.438 9.877v-6.987h-2.54v-2.89h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.242 0-1.632.771-1.632 1.562v1.875h2.773l-.443 2.89h-2.33v6.987C18.343 21.128 22 16.991 22 12"/>
+            </svg>
+          </a>
+          <a href="https://www.instagram.com/mocnguyenproductions/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+            {/* Instagram SVG */}
+            <svg width="24" height="24" fill="currentColor" className="text-black hover:text-pink-500 transition">
+              <path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5A4.25 4.25 0 0 0 7.75 20.5h8.5A4.25 4.25 0 0 0 20.5 16.25v-8.5A4.25 4.25 0 0 0 16.25 3.5h-8.5zm4.25 3.25a5.25 5.25 0 1 1 0 10.5 5.25 5.25 0 0 1 0-10.5zm0 1.5a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5zm5.25.75a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+            </svg>
+          </a>
         </div>
-      </footer>
-
-      {/* Add global styles for animations */}
-      <style jsx global>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        .animate-fadeIn {
-          animation: fadeIn 1s ease forwards;
-        }
-      `}</style>
+      </div>
     </div>
   );
 }

@@ -236,7 +236,7 @@ export default function ContactPage() {
       <footer className="w-full max-w-6xl mx-auto px-4 pb-8">
         <div className="flex flex-col md:flex-row justify-between items-end text-xs font-semibold mb-2">
           <div>
-            <a href="mailto:info@mocproductions.com" className="hover:underline">mocnguyen.productions@gmail.com</a><br />
+            <a href="mailto:info@mocproductions.com" className="hover:underline">info@mocproductions.com</a><br />
             +84914151688
           </div>
           {/* <div className="flex gap-4 mt-2 md:mt-0">

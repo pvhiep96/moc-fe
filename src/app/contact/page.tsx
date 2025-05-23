@@ -236,8 +236,8 @@ export default function ContactPage() {
       <footer className="w-full max-w-6xl mx-auto px-4 pb-8">
         <div className="flex flex-col md:flex-row justify-between items-end text-xs font-semibold mb-2">
           <div>
-            <a href="mailto:mocnguyen.productions@gmail.com" className="hover:underline">mocnguyen.productions@gmail.com</a><br />
-            +41 (0) 764 530 053
+            <a href="mailto:info@mocproductions.com" className="hover:underline">mocnguyen.productions@gmail.com</a><br />
+            +84914151688
           </div>
           {/* <div className="flex gap-4 mt-2 md:mt-0">
             <a href="#" className="hover:underline">MENU</a>
@@ -246,15 +246,11 @@ export default function ContactPage() {
             <a href="#" className="hover:opacity-70">FB</a>
           </div> */}
           <div className="text-right mt-2 md:mt-0">
-            WEBSITE BY<br />
-            <span className="font-bold">THE FIRST THE LAST</span>
-          </div>
-          <div className="text-right mt-2 md:mt-0">
             ©2025 moc-production<br />- ALL RIGHTS RESERVED
           </div>
         </div>
         <div className="text-[55px] md:text-[80px] font-extrabold tracking-tighter leading-none text-black/90 text-left mt-4">
-          MOC PRODUCTIONS
+          MOC
         </div>
       </footer>
     </div>

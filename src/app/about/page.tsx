@@ -1,10 +1,23 @@
 'use client';
 
 import Image from 'next/image';
+import { useState } from 'react';
+import MenuOverlay from '@/components/MenuOverlay';
+import DynamicMenuButton from '@/components/DynamicMenuButton';
+import DynamicLogo from '@/components/DynamicLogo';
 
 export default function AboutPage() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <div className="bg-[#f7f7f7] min-h-screen text-black font-sans">
+      {/* Menu Overlay */}
+      <MenuOverlay isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+
+      {/* Dynamic Menu Button with color changing based on background */}
+      <DynamicMenuButton menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+
+
       {/* Header */}
       <div className="pt-8 md:pt-16 pb-4 md:pb-8 px-4 md:pl-[100px] flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-8 mb-[30px]">
         <h1

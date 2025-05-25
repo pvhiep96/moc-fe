@@ -536,7 +536,7 @@ export default function Home() {
                       )}
                       {/* Project name - controlled by hover state */}
                       <div className={`absolute inset-0 transition-opacity duration-300 flex items-end justify-start ${hoverStates[project.id] !== undefined ? 'opacity-100' : 'opacity-0'}`}>
-                        <h3 className="text-white text-xl pl-3 pb-3 font-light tracking-wider w-full bg-[linear-gradient(0deg,rgba(0,0,0,0.5),transparent)] z-10">{project.name}</h3>
+                        <h3 className="text-[#E2BA1C] text-xl pl-3 pb-3 font-bold tracking-wider w-full z-10 font-helvetica capitalize">{project.name}</h3>
                       </div>
                     </div>
                   </Link>

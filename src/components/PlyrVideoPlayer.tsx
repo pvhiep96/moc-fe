@@ -32,13 +32,12 @@ const PlyrVideoPlayer = ({
 
     // Create new player
     const player = new Plyr(videoRef.current.querySelector('.js-plyr-youtube') as HTMLElement, {
-      controls: [],
-      clickToPlay: false,
+      controls: ['play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
+      clickToPlay: true,
       keyboard: { focused: false, global: false },
-      tooltips: { controls: false, seek: false },
+      tooltips: { controls: true, seek: true },
       captions: { active: false, update: false },
-      fullscreen: { enabled: false },
-      hideControls: true,
+      fullscreen: { enabled: true },
       // Không sử dụng muted ở đây vì nó không hoạt động đúng với YouTube
       youtube: {
         noCookie: true,
@@ -51,7 +50,6 @@ const PlyrVideoPlayer = ({
         controls: 0,
         autoplay: playing ? 1 : 0,
         origin: typeof window !== 'undefined' ? window.location.origin : '',
-        // Thêm muted vào URL của YouTube
         mute: muted ? 1 : 0
       }
     });

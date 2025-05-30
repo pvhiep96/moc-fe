@@ -9,6 +9,7 @@ import { getErrorMessage } from '@/utils/errorHandler'
 import LoadingScreen from '@/components/LoadingScreen';
 import MenuOverlay from '@/components/MenuOverlay';
 import DynamicMenuButton from '@/components/DynamicMenuButton';
+import PlyrVideoPlayer from '@/components/PlyrVideoPlayer';
 import './video.css';
 
 // Định nghĩa kiểu dữ liệu cho các phần tử hiển thị
@@ -985,7 +986,6 @@ const ProjectDetail = () => {
   // Component để hiển thị video
   const VideoBlock = ({ videoId }: { videoId: string }) => {
     // Lấy origin để tránh vấn đề bảo mật
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const [videoError, setVideoError] = useState(false);
 
     // Xử lý lỗi video
@@ -1021,7 +1021,7 @@ const ProjectDetail = () => {
     }, []);
 
     return (
-      <div className="w-full py-4 flex justify-center">
+      <div className="w-full py-4 flex justify-center mb-30px">
         <div className="aspect-video w-full max-w-4xl video-container">
           {videoError ? (
             <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-500">
@@ -1037,18 +1037,7 @@ const ProjectDetail = () => {
               </div>
             </div>
           ) : (
-            <iframe
-              width="100%"
-              height="100%"
-              src={`https://www.youtube.com/embed/${videoId}?rel=0&showinfo=0&controls=1&modestbranding=1&enablejsapi=1&origin=${origin}`}
-              title="YouTube video player"
-              style={{ border: 0 }}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              loading="lazy"
-              onError={handleVideoError}
-              onLoad={handleVideoLoad}
-            ></iframe>
+            <PlyrVideoPlayer videoId={videoId} playing={false} muted={false} className="w-full h-full" />
           )}
         </div>
       </div>
@@ -1128,7 +1117,10 @@ const ProjectDetail = () => {
         >
           {/* Project title */}
           <div className="h-full flex-shrink-0 flex items-center justify-center">
-            <h1 className="text-5xl font-bold text-black text-center">
+            <h1
+              className="text-5xl font-bold text-black text-center"
+              style={{ fontFamily: "'Lexend Exa', sans-serif" }}
+            >
               {projectName}
             </h1>
           </div>
@@ -1170,31 +1162,7 @@ const ProjectDetail = () => {
                   className="h-full flex-shrink-0 relative flex items-center justify-center"
                 >
                   <div className="h-full max-h-[80vh] aspect-video video-container">
-                    <iframe
-                      width="100%"
-                      height="100%"
-                      src={`https://www.youtube.com/embed/${item.content}?rel=0&showinfo=0&controls=1&modestbranding=1&enablejsapi=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`}
-                      title="YouTube video player"
-                      style={{ border: 0 }}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      allowFullScreen
-                      loading="lazy"
-                      onError={(e) => {
-                        // Hiển thị thông báo lỗi
-                        const container = e.currentTarget.parentElement;
-                        if (container) {
-                          const errorDiv = document.createElement('div');
-                          errorDiv.className = 'w-full h-full flex items-center justify-center bg-gray-100 text-gray-500 absolute top-0 left-0';
-                          errorDiv.innerHTML = `
-                            <div class="text-center p-4">
-                              <p class="text-lg font-medium mb-2">Video không khả dụng</p>
-                              <p class="text-sm">Video này có thể đã bị xóa hoặc đặt ở chế độ riêng tư.</p>
-                            </div>
-                          `;
-                          container.appendChild(errorDiv);
-                        }
-                      }}
-                    ></iframe>
+                    <PlyrVideoPlayer videoId={item.content} playing={false} muted={false} className="w-full h-full" />
                   </div>
                 </div>
               );
@@ -1246,7 +1214,9 @@ const ProjectDetail = () => {
               />
               <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                 <div className="text-center">
-                  <h1 className="text-3xl font-bold text-white px-4 mb-4">
+                  <h1 className="text-3xl font-bold text-white px-4 mb-4"
+                    style={{ fontFamily: "'Lexend Exa', sans-serif" }}
+                  >
                     {projectName}
                   </h1>
                   <div className="text-sm text-white animate-bounce">
@@ -1259,7 +1229,7 @@ const ProjectDetail = () => {
           {/* YouTube Video cho mobile - ngay sau ảnh cover */}
 
           {/* Các items còn lại cho mobile */}
-          <div className="flex flex-col">
+          <div className="flex flex-col pb-[45px]">
             {projectItems.map((item, index) => {
               if (item.type === 'description') {
                 return <DescriptionBlock key={`desc-${index}`} content={item.content} />;

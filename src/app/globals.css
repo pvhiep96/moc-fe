@@ -317,3 +317,12 @@ html {
   height: 200% !important;
   width: 300% !important;
 }
+
+/* Ensure Plyr play button is centered */
+.plyr__control--overlaid {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 10;
+}

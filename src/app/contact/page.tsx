@@ -57,7 +57,7 @@ export default function ContactPage() {
             CONNECT<br />WITH US
           </h1>
           <div className="text-xs text-right max-w-xs mt-4 md:mt-8 ml-4">
-            TO REACH MOC PRODUCTIONS STUDIO OR TO REQUEST A DETAILED COLLECTION OF OUR WEDDING PHOTOGRAPHY SERVICES, PLEASE FEEL FREE TO FILL OUT YOUR INFORMATION AND WE WILL CONTACT YOU WITHIN 24 HOURS.
+            TO REACH MOC OR TO REQUEST A DETAILED QUOTA, PLEASE FEEL FREE TO FILL OUT YOUR INFORMATION AND WE WILL CONTACT YOU WITHIN 24 HOURS.
           </div>
         </div>
         {/* Form */}
@@ -237,7 +237,8 @@ export default function ContactPage() {
         <div className="flex flex-col md:flex-row justify-between items-end text-xs font-semibold mb-2">
           <div>
             <a href="mailto:info@mocproductions.com" className="hover:underline">info@mocproductions.com</a><br />
-            +84914151688
+            <span>+84906863992</span><br />
+            <span>whatsapp telegram imessage</span>
           </div>
           {/* <div className="flex gap-4 mt-2 md:mt-0">
             <a href="#" className="hover:underline">MENU</a>

@@ -535,8 +535,14 @@ export default function Home() {
                         <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-300"></div>
                       )}
                       {/* Project name - controlled by hover state */}
-                      <div className={`absolute inset-0 transition-opacity duration-300 flex items-end justify-start ${hoverStates[project.id] !== undefined ? 'opacity-100' : 'opacity-0'}`}>
-                        <h3 className="text-[#E2BA1C] text-xl pl-3 pb-3 font-bold tracking-wider w-full z-10 font-helvetica capitalize">{project.name}</h3>
+                      <div className={`absolute inset-0 transition-opacity duration-300 flex items-start justify-start ${hoverStates[project.id] !== undefined ? 'opacity-100' : 'opacity-0'}`}>
+                        <div className="absolute top-0 left-0 w-full h-14 bg-gradient-to-b from-black/70 to-transparent z-0 pointer-events-none" />
+                        <h3
+                          className="text-[#E2BA1C] text-xl pl-3 pt-3 pb-3 font-bold tracking-wider w-full z-10 capitalize relative"
+                          style={{ fontFamily: "'Lexend Exa', sans-serif" }}
+                        >
+                          {project.name}
+                        </h3>
                       </div>
                     </div>
                   </Link>

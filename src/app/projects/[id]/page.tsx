@@ -1079,7 +1079,7 @@ const ProjectDetail = () => {
 
       {/* Nút Back sticky phía dưới bên phải cho mobile */}
       <Link
-        href="/moc-productions"
+        href="/"
         className="md:hidden fixed bottom-4 right-4 flex items-center gap-2 px-4 py-2 text-sm font-medium z-50 bg-white/90 backdrop-blur-sm rounded-full text-black shadow-md"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="transform rotate-180">

@@ -1225,7 +1225,8 @@ const ProjectDetail = () => {
               if (item.type === 'description') {
                 return <DescriptionBlock key={`desc-${index}`} content={item.content} />;
               } else if (item.type === 'video') {
-                return <VideoBlock key={`video-${index}`} videoId={item.content} />;
+                return <PlyrVideoPlayer videoId={item.content} playing={false} muted={false} className="w-full h-full" />;
+                // return <VideoBlock key={`video-${index}`} videoId={item.content} />;
               } else {
                 return (
                   <div

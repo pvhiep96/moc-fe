@@ -3,18 +3,18 @@ FROM node:19-alpine
 WORKDIR /app
 
 # Install dependencies
-COPY package*.json ./
-COPY yarn.lock ./
-RUN yarn install --frozen-lockfile
+#COPY package*.json ./
+#COPY yarn.lock ./
+#RUN yarn install --frozen-lockfile
 
 # Copy source code
-COPY . .
+#COPY . .
 
 # Build the app
-RUN yarn build
+#RUN yarn build
 
 # Expose port
-EXPOSE 3000
+#EXPOSE 3000
 
 # Start the app
-CMD ["yarn", "start"]
+#CMD ["yarn", "start"]

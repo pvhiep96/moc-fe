@@ -14,8 +14,9 @@ services:
       - NEXT_PUBLIC_ENV=${NEXT_PUBLIC_ENV:-production}
     volumes:
       - .:/app
-      - /app/node_modules
-      - /app/.next
+        #- /app/node_modules
+        #- /app/.next
+    command: "yarn start"
     restart: unless-stopped
 
 # networks:

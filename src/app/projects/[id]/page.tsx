@@ -1225,8 +1225,13 @@ const ProjectDetail = () => {
               if (item.type === 'description') {
                 return <DescriptionBlock key={`desc-${index}`} content={item.content} />;
               } else if (item.type === 'video') {
-                return <PlyrVideoPlayer videoId={item.content} playing={false} muted={false} className="w-full h-full" />;
-                // return <VideoBlock key={`video-${index}`} videoId={item.content} />;
+                return (
+                  <div key={`video-${index}`} className="w-full py-4">
+                    <div className="aspect-video w-full max-w-4xl mx-auto">
+                      <PlyrVideoPlayer videoId={item.content} playing={false} muted={false} className="w-full h-full" />
+                    </div>
+                  </div>
+                );
               } else {
                 return (
                   <div

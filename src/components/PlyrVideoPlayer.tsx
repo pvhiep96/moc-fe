@@ -160,6 +160,13 @@ const PlyrVideoPlayer = ({
           allowFullScreen
           allow="autoplay"
           title="YouTube Video Player"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+            maxWidth: '100%',
+            maxHeight: '100%'
+          }}
         ></iframe>
       </div>
     </div>

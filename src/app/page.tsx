@@ -23,6 +23,7 @@ type Project = {
   tags: string[];
   cover_image?: string; // Main project image
   hover_image?: string; // Image to show on hover
+  thumbnails?: { id: number; image_url: string }[]; // Thumbnail images for home page carousel
   images: string[]; // All project images
   video_urls: { url: string }[]; // Project videos
   show_video?: boolean; // Whether to show video instead of images on home page
@@ -83,13 +84,21 @@ export default function Home() {
         const projectsToPreload = data.slice(0, 6);
 
         projectsToPreload.forEach((project: Project) => {
-          // Add cover image and first 2 images from each project
+          // Add cover image and thumbnails from each project
           if (project.cover_image) {
             imagesToPreload.push(project.cover_image);
           }
 
-          if (project.images && project.images.length > 0) {
-            // Add first 2 images from each project
+          // Use thumbnails if available, otherwise fallback to first 2 images
+          if (project.thumbnails && project.thumbnails.length > 0) {
+            // Add all thumbnails from each project
+            project.thumbnails.forEach((img: { id: number; image_url: string }) => {
+              if (img && !imagesToPreload.includes(img.image_url)) {
+                imagesToPreload.push(img.image_url);
+              }
+            });
+          } else if (project.images && project.images.length > 0) {
+            // Fallback to first 2 images from each project
             project.images.slice(0, 2).forEach((img: string) => {
               if (img && !imagesToPreload.includes(img)) {
                 imagesToPreload.push(img);
@@ -394,13 +403,24 @@ export default function Home() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3">
               {projects.map((project) => {
-                // Limit to max 6 images for carousel
-                const projectImages = project.images && project.images.length > 0
-                  ? project.images.slice(0, 6)
-                  : (project.cover_image ? [project.cover_image] : []);
+                // Use thumbnails if available, otherwise fallback to project.images or cover_image
+                let projectImages: string[] = [];
+                
+                // Priority 1: Use thumbnails if available
+                if (project.thumbnails && project.thumbnails.length > 0) {
+                  projectImages = project.thumbnails.map(t => t.image_url);
+                }
+                // Priority 2: Use project.images if thumbnails not available
+                else if (project.images && project.images.length > 0) {
+                  projectImages = project.images.slice(0, 6);
+                }
+                // Priority 3: Use cover_image as fallback
+                else if (project.cover_image) {
+                  projectImages = [project.cover_image];
+                }
+                
                 const imageCount = projectImages.length;
                 const currentImageIndex = hoverStates[project.id] || 0;
-
 
                 const shouldShowVideo = project.show_video && project.video_vertical?.has_uploaded_video && project.video_vertical?.video_type === 'file';
 
@@ -538,7 +558,7 @@ export default function Home() {
                       <div className={`absolute inset-0 transition-opacity duration-300 flex items-start justify-start ${hoverStates[project.id] !== undefined ? 'opacity-100' : 'opacity-0'}`}>
                         <div className="absolute top-0 left-0 w-full h-14 bg-gradient-to-b from-black/70 to-transparent z-0 pointer-events-none" />
                         <h3
-                          className="text-[#E2BA1C] text-xl pl-3 pt-3 pb-3 font-bold tracking-wider w-full z-10 capitalize relative"
+                          className="text-[#E2BA1C] text-xl pl-3 pt-3 pb-3 font-bold tracking-wider w-full z-10 uppercase relative"
                           style={{ fontFamily: "'Lexend Exa', sans-serif" }}
                         >
                           {project.name}

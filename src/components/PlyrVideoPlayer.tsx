@@ -162,39 +162,6 @@ const PlyrVideoPlayer = ({
           title="YouTube Video Player"
         ></iframe>
       </div>
-      <style jsx>{`
-        .plyr-container {
-          width: 100%;
-          height: 100%;
-          background-color: #000;
-          position: relative;
-          overflow: hidden;
-        }
-        .js-plyr-youtube {
-          position: relative;
-          height: 100%;
-          width: 100%;
-        }
-        .js-plyr-youtube iframe {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          border: 0;
-        }
-        :global(.plyr--video) {
-          height: 100%;
-        }
-        :global(.plyr__video-embed) {
-          height: 100%;
-          padding-bottom: 0 !important;
-        }
-        :global(.plyr--youtube .plyr__video-embed) {
-          padding-bottom: 0 !important;
-          height: 100% !important;
-        }
-      `}</style>
     </div>
   );
 };

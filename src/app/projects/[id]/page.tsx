@@ -432,8 +432,6 @@ const ProjectDetail = () => {
         // Fetch project data from API
         const projectData = await projectsApi.getProject(Number(id) || id);
 
-
-
         // Set project name
         setProjectName(projectData.name ? projectData.name.toUpperCase() : `Project ${id}`);
 
@@ -446,7 +444,6 @@ const ProjectDetail = () => {
 
         // Check if we have ordered content from the API
         if (projectData.ordered_content && projectData.ordered_content.length > 0) {
-
 
           // Map the ordered content to our ProjectItem format
           projectData.ordered_content.forEach((item: OrderedContentItem) => {
@@ -476,8 +473,6 @@ const ProjectDetail = () => {
             }
           });
         } else {
-
-
           // Fallback to old logic if ordered_content is not available
           // Add descriptions from the project
           if (projectData.descriptions && projectData.descriptions.length > 0) {
@@ -542,8 +537,6 @@ const ProjectDetail = () => {
                   content: videoId,
                   order: 0 // Temporary order, will be updated later
                 });
-
-
               }
             });
           }
@@ -559,7 +552,6 @@ const ProjectDetail = () => {
             videoItems.forEach((videoItem, index) => {
               videoItem.order = startOrder + index;
               items.push(videoItem);
-
             });
           }
         }
@@ -573,7 +565,6 @@ const ProjectDetail = () => {
           setLoading(false);
         }, 500);
       } catch (error) {
-
         setTimeout(() => setLoading(false), 500);
       }
     }

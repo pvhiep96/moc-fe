@@ -145,7 +145,7 @@ export default function ProjectDetail() {
 
       <div className="container mx-auto px-4 py-8 pt-[80px] md:pt-[145px]">
 
-      <h1 className="text-3xl font-bold mb-6">{project.name}</h1>
+      <h1 className="text-3xl font-bold mb-6 mt-6">{project.name}</h1>
       {/* Tabs */}
       <div className="flex gap-4 mb-8">
         <button

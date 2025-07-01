@@ -47,17 +47,25 @@ const ProjectDetail = () => {
   const router = useRouter()
   const params = useParams()
   const id = params.id as string
+  const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [projectImages, setProjectImages] = useState<string[]>([])
   const [projectItems, setProjectItems] = useState<ProjectItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [projectName, setProjectName] = useState(`Project ${id}`)
+  const [projectName, setProjectName] = useState('')
   const sliderRef = useRef<HTMLDivElement>(null)
   const imageRefs = useRef<(HTMLDivElement | null)[]>([])
   const [currentIndex, setCurrentIndex] = useState(1);
 
+  // Handle hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Add CSS to body to control scroll behavior
   useEffect(() => {
+    if (!mounted) return;
+    
     // Add CSS rule to the head to ensure wheel events work correctly
     const style = document.createElement('style');
     style.textContent = `
@@ -203,7 +211,7 @@ const ProjectDetail = () => {
       // Xóa event listener ở cấp độ window
       window.removeEventListener('wheel', handleWindowWheel);
     };
-  }, []);
+  }, [mounted]);
 
   // Add state to track if auto-scroll should be permanently disabled
   const [autoScrollDisabled, setAutoScrollDisabled] = useState(false);
@@ -215,6 +223,8 @@ const ProjectDetail = () => {
 
   // Add mouse movement tracking
   useEffect(() => {
+    if (!mounted) return;
+    
     const handleMouseMove = () => {
       setIsMouseIdle(false);
 
@@ -358,10 +368,12 @@ const ProjectDetail = () => {
         clearTimeout(mouseTimerRef.current);
       }
     };
-  }, []);
+  }, [mounted]);
 
   // Smooth auto-scroll implementation for desktop horizontal scroll only
   useEffect(() => {
+    if (!mounted) return;
+    
     // Only start auto-scroll if it's not permanently disabled
     if (isMouseIdle && !loading && !autoScrollDisabled && sliderRef.current) {
       let startTime: number | null = null;
@@ -419,10 +431,10 @@ const ProjectDetail = () => {
       // Ensure animation stops if conditions are no longer met (e.g., autoScrollDisabled becomes true)
       cancelAnimationFrame(scrollAnimationRef.current);
     }
-  }, [isMouseIdle, loading, autoScrollDisabled]); // Add autoScrollDisabled to dependency array
+  }, [isMouseIdle, loading, autoScrollDisabled, mounted]); // Add autoScrollDisabled to dependency array
 
   useEffect(() => {
-    if (!id) return
+    if (!mounted || !id) return
 
     // Set loading state at the beginning
     setLoading(true)
@@ -571,7 +583,7 @@ const ProjectDetail = () => {
 
     // Start loading data
     loadData();
-  }, [id])
+  }, [id, mounted])
 
   // Helper function to extract YouTube video ID
   const getYouTubeId = (url: string): string => {
@@ -603,7 +615,7 @@ const ProjectDetail = () => {
 
   // Effect to update counter based on scroll position - more responsive version
   useEffect(() => {
-    if (!sliderRef.current) return;
+    if (!mounted || !sliderRef.current) return;
 
     // Sử dụng requestAnimationFrame để đảm bảo hiệu ứng mượt mà
     const updateCounterAnimation = () => {
@@ -948,9 +960,13 @@ const ProjectDetail = () => {
 
       // console.log('Cleaned up all event listeners and intervals');
     };
-  }, [projectItems, currentIndex]);
+  }, [projectItems, currentIndex, mounted]);
 
-  // Update the loading UI
+  // Handle hydration and loading states
+  if (!mounted) {
+    return <LoadingScreen />;
+  }
+
   if (loading) {
     return (
       <LoadingScreen
@@ -1112,7 +1128,7 @@ const ProjectDetail = () => {
               className="text-5xl font-bold text-black text-center"
               style={{ fontFamily: "'Lexend Exa', sans-serif" }}
             >
-              {projectName}
+              {projectName || `Project ${id}`}
             </h1>
           </div>
 
@@ -1208,7 +1224,7 @@ const ProjectDetail = () => {
                   <h1 className="text-3xl font-bold text-white px-4 mb-4"
                     style={{ fontFamily: "'Lexend Exa', sans-serif" }}
                   >
-                    {projectName}
+                    {projectName || `Project ${id}`}
                   </h1>
                   <div className="text-sm text-white animate-bounce">
                     Scroll down to view more ↓

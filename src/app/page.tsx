@@ -74,7 +74,9 @@ export default function Home() {
     const fetchProjects = async () => {
       try {
         const data = await projectsApi.getAllProjects();
-        setProjects(data);
+        // Sort projects by id in descending order
+        const sortedProjects = data.sort((a: Project, b: Project) => b.id - a.id);
+        setProjects(sortedProjects);
 
         // Collect assets to preload
         const imagesToPreload: string[] = [];

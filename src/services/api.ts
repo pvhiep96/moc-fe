@@ -33,6 +33,10 @@ export const projectsApi = {
     const response = await apiClient.delete(`${API_V1_PATH}/projects/${id}`);
     return response.data;
   },
+  createInquiries: async (projectData: any) => {
+    const response = await apiClient.post(`${API_V1_PATH}/inquiries`, projectData);
+    return response.data;
+  }
 };
 
-// Add more API services as needed 
+// Add more API services as needed

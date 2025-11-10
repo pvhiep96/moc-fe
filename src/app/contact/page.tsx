@@ -5,6 +5,8 @@ import { useState } from 'react';
 import MenuOverlay from '@/components/MenuOverlay';
 import DynamicMenuButton from '@/components/DynamicMenuButton';
 import DynamicLogo from '@/components/DynamicLogo';
+import { projectsApi } from "@/services/api";
+import { getErrorMessage } from '@/utils/errorHandler';
 
 export default function ContactPage() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -22,6 +24,9 @@ export default function ContactPage() {
     message: '',
     consent: false
   });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -33,9 +38,50 @@ export default function ContactPage() {
     setFormData(prev => ({ ...prev, [name]: checked }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    // e.preventDefault();
     // Implement form submission logic here
+    if (!formData.consent) {
+      setSubmitError('You must consent to the privacy policy before submitting.');
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError(null);
+    setSubmitSuccess(false);
+
+    try {
+      // Map frontend state to backend API fields.
+      // Using snake_case as it's a common convention for APIs.
+      const payload = {
+        full_name: formData.fullName,
+        email: formData.email,
+        location: formData.whereDoYouLive,
+        event_type: formData.eventType,
+        role: formData.whatIsYourRole,
+        event_date: formData.date,
+        event_location: formData.eventLocation,
+        budget: formData.budget,
+        instagram: formData.bridesInstagramName,
+        source: formData.howDidYouHearAboutUs,
+        message: formData.message,
+      };
+
+      // await apiClient.post('/inquiries', payload);
+      const data = await projectsApi.createInquiries(payload);
+      setSubmitSuccess(true);
+      // Reset form on success
+      setFormData({
+        fullName: '', email: '', whereDoYouLive: '', eventType: '',
+        whatIsYourRole: '', date: '', eventLocation: '', budget: '',
+        bridesInstagramName: '', howDidYouHearAboutUs: '', message: '',
+        consent: false
+      });
+
+    } catch (error) {
+      setSubmitError(getErrorMessage(error));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -62,7 +108,8 @@ export default function ContactPage() {
         </div>
         {/* Form */}
         <form onSubmit={handleSubmit} className="w-full max-w-6xl bg-[#f5f5f5] p-8 rounded-md mb-10 mt-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-6">
+
+        {!submitSuccess && ( <><div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-6">
             <div className="flex flex-col mb-2">
               <label className="uppercase text-xs font-bold text-gray-500 mb-1">Full Name</label>
               <input
@@ -224,12 +271,26 @@ export default function ContactPage() {
               I CONSENT FOR THE INFORMATION SUBMITTED ABOVE TO BE RECORDED AND STORED FOR THE PURPOSES OF PROVIDING SERVICES RELATING TO MY INQUIRY. I AGREE THAT REGISTRATION ON OUR SITE OR THE MOC PRODUCTIONS SITE CONSTITUTES AGREEMENT TO ITS USER AGREEMENT & PRIVACY POLICY
             </label>
           </div>
-          <div className="flex justify-end mt-4">
-            <button type="submit" className="flex items-center gap-2 text-xl font-bold group">
-              SEND
-              <span className="ml-2 text-3xl group-hover:translate-x-1 transition-transform">→</span>
+          </>
+          )}
+          {submitSuccess && (
+            <div className="mt-4 text-green-700 bg-green-100 p-3 rounded-md text-sm">
+              Thank you for your message! We will get back to you within 24 hours.
+            </div>
+          )}
+          {submitError && (
+            <div className="mt-4 text-red-700 bg-red-100 p-3 rounded-md text-sm">
+              {submitError}
+            </div>
+          )}
+
+          {!submitSuccess && ( <div className="flex justify-end mt-4">
+            <button type="submit" className="flex items-center gap-2 text-xl font-bold group" disabled={submitting}>
+              {submitting ? 'SENDING...' : 'SEND'}
+              {!submitting && <span className="ml-2 text-3xl group-hover:translate-x-1 transition-transform">→</span>}
             </button>
           </div>
+          )}
         </form>
       </main>
       {/* Footer */}

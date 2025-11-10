@@ -26,7 +26,7 @@ apiClient.interceptors.request.use(
     // if (IS_DEVELOPMENT && typeof window !== 'undefined') {
     //   console.log(`🚀 Request: ${config.method?.toUpperCase()} ${config.url}`);
     // }
-    
+
     return config;
   },
   (error) => {
@@ -59,7 +59,7 @@ apiClient.interceptors.response.use(
           data: error.response.data
         });
       }
-      
+
       // Handle 500 Internal Server Error
       if (error.response.status >= 500) {
         console.error('Server error occurred:', error.response.data);
@@ -75,9 +75,9 @@ apiClient.interceptors.response.use(
         console.error('❌ Error:', error.message);
       }
     }
-    
+
     return Promise.reject(error);
   }
 );
 
-export default apiClient; 
+export default apiClient;

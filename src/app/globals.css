@@ -18,9 +18,11 @@
     --foreground: #ededed;
   }
 }
+/* Font tự host: WOFF2 (nhỏ hơn ~60% so với TTF), TTF làm fallback */
 @font-face {
   font-family: 'Lexend Exa';
-  src: url('/Lexend_Exa/LexendExa-VariableFont_wght.ttf') format('woff2');
+  src: url('/fonts/LexendExa-VariableFont_wght.woff2') format('woff2'),
+       url('/Lexend_Exa/LexendExa-VariableFont_wght.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -28,7 +30,8 @@
 
 @font-face {
   font-family: 'Raleway';
-  src: url('/Raleway/Raleway-Bold.ttf') format('woff2');
+  src: url('/fonts/Raleway-Bold.woff2') format('woff2'),
+       url('/Raleway/Raleway-Bold.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -36,16 +39,17 @@
 
 @font-face {
   font-family: 'Amaranth';
-  src: url('/Amaranth/Amaranth-Regular.ttf') format('woff2');
+  src: url('/fonts/Amaranth-Regular.woff2') format('woff2'),
+       url('/Amaranth/Amaranth-Regular.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
 
-/* Nếu cần dùng Sorts Mill Goudy, bạn có thể thêm tương tự */
 @font-face {
   font-family: 'Sorts Mill Goudy';
-  src: url('/Sorts_Mill_Goudy/SortsMillGoudy-Regular.ttf') format('woff2');
+  src: url('/fonts/SortsMillGoudy-Regular.woff2') format('woff2'),
+       url('/Sorts_Mill_Goudy/SortsMillGoudy-Regular.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -53,7 +57,8 @@
 
 @font-face {
   font-family: 'Helvetica Bold';
-  src: url('/helvetica/Helvetica-Bold.ttf') format('truetype');
+  src: url('/fonts/Helvetica-Bold.woff2') format('woff2'),
+       url('/helvetica/Helvetica-Bold.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;

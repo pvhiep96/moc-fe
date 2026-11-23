@@ -7,9 +7,11 @@ import DynamicMenuButton from "@/components/DynamicMenuButton";
 import DynamicLogo from "@/components/DynamicLogo";
 import { projectsApi } from "@/services/api";
 import { getErrorMessage } from "@/utils/errorHandler";
+import { MultilineText, useSiteContent } from "@/content/SiteContentProvider";
 
 export default function ContactPage() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { t, lines, e } = useSiteContent();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -112,14 +114,11 @@ export default function ContactPage() {
       <main className="flex-1 flex flex-col items-center justify-start px-4 md:px-0">
         {/* Title & Description */}
         <div className="w-full max-w-6xl flex flex-row justify-between items-start mt-12 mb-2">
-          <h1 className="text-[3rem] md:text-[5rem] font-extrabold leading-none tracking-tight">
-            CONNECT
-            <br />
-            WITH US
+          <h1 className="text-[3rem] md:text-[5rem] font-extrabold leading-none tracking-tight" {...e("contact_title")}>
+            <MultilineText text={t("contact_title")} />
           </h1>
-          <div className="text-xs text-right max-w-xs mt-4 md:mt-8 ml-4">
-            TO REACH MOC OR TO REQUEST A DETAILED QUOTA, PLEASE FEEL FREE TO
-            FILL OUT YOUR INFORMATION AND WE WILL CONTACT YOU WITHIN 24 HOURS.
+          <div className="text-xs text-right max-w-xs mt-4 md:mt-8 ml-4" {...e("contact_intro")}>
+            <MultilineText text={t("contact_intro")} />
           </div>
         </div>
         {/* Form */}
@@ -183,6 +182,7 @@ export default function ContactPage() {
                     Event Type
                   </label>
                   <select
+                  {...e("contact_event_types")}
                     name="eventType"
                     className="bg-transparent border-0 border-b border-gray-300 py-3 px-2 text-base font-semibold uppercase focus:outline-none"
                     value={formData.eventType}
@@ -190,9 +190,9 @@ export default function ContactPage() {
                     required
                   >
                     <option>EVENT TYPE</option>
-                    <option>Wedding</option>
-                    <option>Engagement</option>
-                    <option>Other</option>
+                    {lines("contact_event_types").map((opt) => (
+                      <option key={opt}>{opt}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="flex flex-col mb-2">
@@ -200,6 +200,7 @@ export default function ContactPage() {
                     What is your role?
                   </label>
                   <select
+                  {...e("contact_roles")}
                     name="whatIsYourRole"
                     className="bg-transparent border-0 border-b border-gray-300 py-3 px-2 text-base font-semibold uppercase focus:outline-none"
                     value={formData.whatIsYourRole}
@@ -207,10 +208,9 @@ export default function ContactPage() {
                     required
                   >
                     <option>WHAT IS YOUR ROLE?</option>
-                    <option>Bride</option>
-                    <option>Groom</option>
-                    <option>Planner</option>
-                    <option>Other</option>
+                    {lines("contact_roles").map((opt) => (
+                      <option key={opt}>{opt}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="flex flex-col mb-2">
@@ -246,6 +246,7 @@ export default function ContactPage() {
                     Budget
                   </label>
                   <select
+                  {...e("contact_budgets")}
                     name="budget"
                     className="bg-transparent border-0 border-b border-gray-300 py-3 px-2 text-base font-semibold uppercase focus:outline-none"
                     value={formData.budget}
@@ -253,10 +254,9 @@ export default function ContactPage() {
                     required
                   >
                     <option>BUDGET</option>
-                    <option>Under $10,000</option>
-                    <option>$10,000 - $30,000</option>
-                    <option>$30,000 - $50,000</option>
-                    <option>Over $50,000</option>
+                    {lines("contact_budgets").map((opt) => (
+                      <option key={opt}>{opt}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="flex flex-col mb-2">
@@ -264,6 +264,7 @@ export default function ContactPage() {
                     How did you hear about us?
                   </label>
                   <select
+                  {...e("contact_sources")}
                     name="howDidYouHearAboutUs"
                     className="bg-transparent border-0 border-b border-gray-300 py-3 px-2 text-base font-semibold uppercase focus:outline-none"
                     value={formData.howDidYouHearAboutUs}
@@ -271,10 +272,9 @@ export default function ContactPage() {
                     required
                   >
                     <option>HOW DID YOU HEAR ABOUT US?</option>
-                    <option>Instagram</option>
-                    <option>Google</option>
-                    <option>Friend</option>
-                    <option>Other</option>
+                    {lines("contact_sources").map((opt) => (
+                      <option key={opt}>{opt}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="flex flex-col mb-2">
@@ -316,20 +316,15 @@ export default function ContactPage() {
                   onChange={handleCheckboxChange}
                   required
                 />
-                <label htmlFor="consent" className="text-xs text-gray-500">
-                  I CONSENT FOR THE INFORMATION SUBMITTED ABOVE TO BE RECORDED
-                  AND STORED FOR THE PURPOSES OF PROVIDING SERVICES RELATING TO
-                  MY INQUIRY. I AGREE THAT REGISTRATION ON OUR SITE OR THE MOC
-                  PRODUCTIONS SITE CONSTITUTES AGREEMENT TO ITS USER AGREEMENT &
-                  PRIVACY POLICY
+                <label htmlFor="consent" className="text-xs text-gray-500" {...e("contact_consent")}>
+                  {t("contact_consent")}
                 </label>
               </div>
             </>
           )}
           {submitSuccess && (
-            <div className="mt-4 text-green-700 bg-green-100 p-3 rounded-md text-sm">
-              Thank you for your message! We will get back to you within 24
-              hours.
+            <div className="mt-4 text-green-700 bg-green-100 p-3 rounded-md text-sm" {...e("contact_success")}>
+              {t("contact_success")}
             </div>
           )}
           {submitError && (
@@ -345,7 +340,7 @@ export default function ContactPage() {
                 className="flex items-center gap-2 text-xl font-bold group"
                 disabled={submitting}
               >
-                {submitting ? "SENDING..." : "SEND"}
+                <span {...e("contact_send_label")}>{submitting ? "SENDING..." : t("contact_send_label")}</span>
                 {!submitting && (
                   <span className="ml-2 text-3xl group-hover:translate-x-1 transition-transform">
                     →
@@ -361,15 +356,16 @@ export default function ContactPage() {
         <div className="flex flex-col md:flex-row justify-between items-end text-xs font-semibold mb-2">
           <div>
             <a
-              href="mailto:info@mocproductions.com"
+              href={`mailto:${t("contact_email")}`}
               className="hover:underline"
+              {...e("contact_email")}
             >
-              info@mocproductions.com
+              {t("contact_email")}
             </a>
             <br />
-            <span>+84906863992</span>
+            <span {...e("contact_phone")}>{t("contact_phone")}</span>
             <br />
-            <span>whatsapp telegram imessage</span>
+            <span {...e("contact_messengers")}>{t("contact_messengers")}</span>
           </div>
           {/* <div className="flex gap-4 mt-2 md:mt-0">
             <a href="#" className="hover:underline">MENU</a>
@@ -377,13 +373,12 @@ export default function ContactPage() {
             <a href="#" className="hover:opacity-70">PI</a>
             <a href="#" className="hover:opacity-70">FB</a>
           </div> */}
-          <div className="text-right mt-2 md:mt-0">
-            ©2025 moc-production
-            <br />- ALL RIGHTS RESERVED
+          <div className="text-right mt-2 md:mt-0" {...e("contact_copyright")}>
+            <MultilineText text={t("contact_copyright")} />
           </div>
         </div>
-        <div className="text-[55px] md:text-[80px] font-extrabold tracking-tighter leading-none text-black/90 text-left mt-4">
-          MOC
+        <div className="text-[55px] md:text-[80px] font-extrabold tracking-tighter leading-none text-black/90 text-left mt-4" {...e("contact_big_word")}>
+          {t("contact_big_word")}
         </div>
       </footer>
     </div>

@@ -1,0 +1,3381 @@
+/*
+ * MOC Nguyen Productions — Interactive Cinema & Photography Experience
+ * Powered by Motion (https://motion.dev/ — MIT Open Source License)
+ */
+
+.moc-stage-page {
+  background-color: #0a0a0a;
+  color: #ffffff;
+  font-family: var(--font-geist-sans), 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.moc-stage-page *,
+.moc-stage-page *::before,
+.moc-stage-page *::after {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==========================================================================
+   FIXED BLEND HEADER & CHARACTER STAGGER LINKS
+   ========================================================================== */
+.moc-header-blend {
+  position: fixed;
+  top: 20px;
+  left: 30px;
+  right: 30px;
+  z-index: 1000;
+  pointer-events: none;
+  mix-blend-mode: difference;
+  isolation: isolate;
+}
+
+.moc-header-blend nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: auto;
+}
+
+.moc-char-link {
+  display: inline-block;
+  font-family: var(--font-geist-sans), 'Geist', sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  height: 20px;
+  text-decoration: none;
+  overflow: hidden;
+  color: #fff;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  position: relative;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  pointer-events: auto;
+  transform: translateZ(0);
+}
+
+.moc-char-link-track {
+  position: relative;
+  display: block;
+}
+
+.moc-char-glyph {
+  display: inline-block;
+  transition: transform 0.58s cubic-bezier(0.76, 0, 0.24, 1);
+  transition-delay: calc(var(--char-idx, 0) * 0.015s);
+  position: relative;
+  color: #fff;
+}
+
+.moc-char-glyph::before {
+  content: attr(data-glyph);
+  position: absolute;
+  top: 100%;
+  left: 0;
+  color: #fff;
+}
+
+.moc-char-link:hover .moc-char-glyph {
+  transform: translateY(-100%);
+}
+
+/* ==========================================================================
+   SECTION 1: HERO APERTURE REVEAL (300x400 -> FULLSCREEN)
+   ========================================================================== */
+.moc-hero-root {
+  background: #ffffff;
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.moc-hero-aperture {
+  position: relative;
+  width: 300px;
+  height: 400px;
+  overflow: hidden;
+  z-index: 5;
+  transition:
+    width 1.2s cubic-bezier(0.6, 0.01, 0.05, 1),
+    height 1.2s cubic-bezier(0.6, 0.01, 0.05, 1);
+}
+
+.moc-hero-aperture.is-expanded {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.moc-hero-frame {
+  position: absolute;
+  inset: 0;
+  clip-path: inset(100% 0 0 0);
+  will-change: clip-path;
+  transition:
+    clip-path 0.65s cubic-bezier(0.25, 0.1, 0.25, 1),
+    opacity 0.4s ease;
+}
+
+.moc-hero-frame.is-revealed {
+  clip-path: inset(0% 0 0 0);
+}
+
+.moc-hero-frame.is-hidden-after {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.moc-hero-frame img,
+.moc-hero-frame video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  display: block;
+}
+
+.moc-hero-final-stage {
+  z-index: 10;
+  background: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.moc-hero-ambient-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.18;
+  filter: grayscale(35%) contrast(1.08);
+  pointer-events: none;
+}
+
+.moc-hero-decade-wrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  width: 80vw;
+  height: auto;
+  overflow: visible;
+  z-index: 1;
+  filter: blur(32px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform, filter;
+  transition:
+    transform 1.2s cubic-bezier(0.6, 0.01, 0.05, 1),
+    filter 1.2s cubic-bezier(0.6, 0.01, 0.05, 1);
+  user-select: none;
+  pointer-events: none;
+}
+
+.moc-hero-decade-wrap.is-settled {
+  transform: translate(-50%, -50%) scale(0.6875);
+  filter: blur(0px);
+}
+
+.moc-hero-decade-num {
+  font-size: clamp(220px, 46vw, 760px);
+  font-weight: 300;
+  line-height: 0.82;
+  letter-spacing: -0.07em;
+  background: linear-gradient(
+    118deg,
+    #0e0e0e 10%,
+    #3d3d3d 25%,
+    #dedede 42%,
+    #ffffff 48%,
+    #5e5e5e 62%,
+    #141414 82%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.moc-hero-center-logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: clamp(130px, 11vw, 210px);
+  height: auto;
+  z-index: 100;
+  opacity: 1;
+  filter: invert(1);
+  mix-blend-mode: difference;
+  pointer-events: none;
+  backface-visibility: hidden;
+}
+
+.moc-hero-captions {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.moc-hero-caption {
+  position: absolute;
+  color: #b5b5b5;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 135%;
+  letter-spacing: -0.03em;
+  z-index: 22;
+}
+
+.moc-hero-caption--left {
+  top: 50%;
+  left: 30px;
+  width: 200px;
+  margin-top: -20px;
+}
+
+.moc-hero-caption--right {
+  top: 50%;
+  right: 30px;
+  width: 200px;
+  margin-top: -20px;
+  text-align: right;
+}
+
+.moc-hero-caption--bl {
+  bottom: 20px;
+  left: 30px;
+}
+
+.moc-hero-caption--bc {
+  bottom: 20px;
+  left: 50%;
+  margin-left: -100px;
+  width: 200px;
+  text-align: center;
+}
+
+.moc-hero-caption--br {
+  bottom: 20px;
+  right: 30px;
+  text-align: right;
+}
+
+/* ==========================================================================
+   SECTION 2: PHILOSOPHY SPOTLIGHT EDITORIAL
+   ========================================================================== */
+.moc-philosophy-section {
+  background: transparent;
+  padding: 160px 30px;
+}
+
+.moc-philosophy-spotlight {
+  position: relative;
+  width: 100%;
+  font-weight: 500;
+  font-size: clamp(24px, 4.16vw, 80px);
+  line-height: 112%;
+  letter-spacing: -0.065em;
+  text-align: justify;
+  color: rgba(255, 255, 255, 0.2);
+  background: radial-gradient(
+    320px circle at var(--spot-x, -9999px) var(--spot-y, -9999px),
+    rgba(255, 255, 255, calc(var(--spot-alpha, 0) * 1)) 0%,
+    rgba(255, 255, 255, calc(var(--spot-alpha, 0) * 0.62)) 22%,
+    rgba(255, 255, 255, calc(var(--spot-alpha, 0) * 0.32)) 44%,
+    rgba(255, 255, 255, calc(var(--spot-alpha, 0) * 0.1)) 65%,
+    transparent 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: currentColor;
+  user-select: none;
+}
+
+.moc-philosophy-line {
+  display: block;
+}
+
+.moc-philosophy-line--indent {
+  text-align: right;
+}
+
+/* ==========================================================================
+   SECTION 3: "EMOTION, LIGHT, CINEMA" — PHOTOGRAPHY & CINEMA SCROLL STAGE
+   (4 Photography Effects: 35mm Filmstrip Viewfinder | Awwwards Zoom Lens |
+    Aceternity 3D Contact Sheet | Fine-Art Darkroom Prints)
+   ========================================================================== */
+.moc-orbit-scroll-track {
+  position: relative;
+  height: 520vh;
+  background-color: #0a0a0a;
+}
+
+.moc-orbit-sticky-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100vw;
+  background-color: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  perspective: 1800px;
+  transform-style: preserve-3d;
+}
+
+/* Khung ngắm máy ảnh chuyên nghiệp (Camera Viewfinder HUD) ở trung tâm */
+.moc-viewfinder-hud {
+  position: relative;
+  z-index: 30;
+  padding: 36px 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(10, 10, 10, 0.86) 0%,
+    rgba(10, 10, 10, 0.58) 62%,
+    transparent 100%
+  );
+  border-radius: 8px;
+}
+
+/* 4 góc khung lấy nét mảnh tinh tế chuẩn Leica Gallery */
+.moc-vf-corner {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-color: rgba(255, 255, 255, 0.38);
+  border-style: solid;
+  transition: border-color 0.3s ease;
+}
+
+.moc-vf-corner--tl {
+  top: 0;
+  left: 0;
+  border-width: 1px 0 0 1px;
+}
+
+.moc-vf-corner--tr {
+  top: 0;
+  right: 0;
+  border-width: 1px 1px 0 0;
+}
+
+.moc-vf-corner--bl {
+  bottom: 0;
+  left: 0;
+  border-width: 0 0 1px 1px;
+}
+
+.moc-vf-corner--br {
+  bottom: 0;
+  right: 0;
+  border-width: 0 1px 1px 0;
+}
+
+.moc-vf-top-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  width: 100%;
+  margin-bottom: 18px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.52);
+  font-weight: 400;
+}
+
+.moc-vf-rec {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.72);
+  font-weight: 400;
+}
+
+.moc-vf-rec-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffffff;
+  opacity: 0.8;
+}
+
+.moc-orbit-headline-row {
+  font-size: clamp(26px, 3vw, 54px);
+  font-weight: 300;
+  line-height: 108%;
+  letter-spacing: -0.05em;
+  color: #ffffff;
+  text-shadow: 0 12px 40px rgba(0, 0, 0, 0.95);
+}
+
+/* Thanh chỉ báo tiến độ mảnh sang trọng (Minimalist Hairline Progress) */
+.moc-vf-exposure-bar {
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.moc-vf-exposure-scale {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.moc-vf-exposure-track {
+  position: relative;
+  width: 160px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.moc-vf-exposure-needle {
+  position: absolute;
+  top: -3px;
+  width: 1px;
+  height: 7px;
+  background: #ffffff;
+  transform: translateX(-50%);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+}
+
+/* Thanh chọn thử 4 Hiệu Ứng Nhiếp Ảnh trực tiếp trên màn hình */
+.moc-photo-mode-switcher {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px;
+  border-radius: 999px;
+  background: rgba(15, 15, 18, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(12px);
+}
+
+.moc-photo-mode-btn {
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 13px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.moc-photo-mode-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.moc-photo-mode-btn.is-active {
+  color: #0a0a0a;
+  background: #ffffff;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   MODE 1: 35MM KODAK FILMSTRIP REELS & DARKROOM FOCUS FLOAT
+   ========================================================================== */
+.moc-filmstrip-rail-wrap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  z-index: 12;
+  pointer-events: none;
+}
+
+.moc-filmstrip-rail-wrap--top {
+  top: 4.5vh;
+}
+
+.moc-filmstrip-rail-wrap--bottom {
+  bottom: 8.5vh;
+}
+
+.moc-filmstrip-track {
+  display: flex;
+  gap: 18px;
+  width: max-content;
+  padding: 14px 24px;
+  background: #111113;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  position: relative;
+  will-change: transform;
+}
+
+/* Lỗ răng cưa cuộn phim 35mm (Sprocket Holes) */
+.moc-filmstrip-track::before,
+.moc-filmstrip-track::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 7px;
+  background-image: repeating-linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.28) 0px,
+    rgba(255, 255, 255, 0.28) 10px,
+    transparent 10px,
+    transparent 22px
+  );
+}
+
+.moc-filmstrip-track::before {
+  top: 3px;
+}
+
+.moc-filmstrip-track::after {
+  bottom: 3px;
+}
+
+.moc-filmstrip-cell {
+  position: relative;
+  width: clamp(210px, 22vw, 330px);
+  height: clamp(130px, 18vh, 210px);
+  background: #050505;
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.moc-filmstrip-cell img,
+.moc-filmstrip-cell video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.moc-filmstrip-code {
+  position: absolute;
+  bottom: 4px;
+  right: 8px;
+  font-size: 9px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #f59e0b;
+  letter-spacing: 0.12em;
+  background: rgba(0, 0, 0, 0.65);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+/* ==========================================================================
+   MODE 2: AWWWARDS 7-WINDOW LENS ZOOM PARALLAX (OLIVIER LAROSE / MOTION.DEV)
+   ========================================================================== */
+.moc-zoom-parallax-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.moc-zoom-el {
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform;
+}
+
+.moc-zoom-img-box {
+  position: relative;
+  overflow: hidden;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+  background: #141414;
+}
+
+.moc-zoom-img-box img,
+.moc-zoom-img-box video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 7 vị trí bố cục chuẩn Awwwards Zoom Parallax */
+.moc-zoom-el--0 .moc-zoom-img-box {
+  width: 26vw;
+  height: 26vh;
+}
+.moc-zoom-el--1 .moc-zoom-img-box {
+  top: -30vh;
+  left: 5vw;
+  width: 34vw;
+  height: 28vh;
+}
+.moc-zoom-el--2 .moc-zoom-img-box {
+  top: -10vh;
+  left: -26vw;
+  width: 20vw;
+  height: 42vh;
+}
+.moc-zoom-el--3 .moc-zoom-img-box {
+  left: 27.5vw;
+  width: 24vw;
+  height: 26vh;
+}
+.moc-zoom-el--4 .moc-zoom-img-box {
+  top: 28vh;
+  left: 5vw;
+  width: 22vw;
+  height: 25vh;
+}
+.moc-zoom-el--5 .moc-zoom-img-box {
+  top: 27.5vh;
+  left: -22.5vw;
+  width: 28vw;
+  height: 24vh;
+}
+.moc-zoom-el--6 .moc-zoom-img-box {
+  top: 22.5vh;
+  left: 25vw;
+  width: 16vw;
+  height: 18vh;
+}
+
+/* ==========================================================================
+   MODE 3: ACETERNITY 3D DARKROOM CONTACT SHEET PARALLAX
+   ========================================================================== */
+.moc-contact-sheet-stage {
+  position: absolute;
+  inset: -18vh -12vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 24px;
+  transform: rotateX(22deg) rotateZ(-14deg) rotateY(8deg) scale(1.12);
+  transform-style: preserve-3d;
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0.78;
+}
+
+.moc-contact-sheet-row {
+  display: flex;
+  gap: 24px;
+  width: max-content;
+  will-change: transform;
+}
+
+.moc-contact-sheet-card {
+  position: relative;
+  width: clamp(250px, 25vw, 380px);
+  height: clamp(168px, 25vh, 260px);
+  background: #0d0d10;
+  padding: 6px 6px 24px 6px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 28px 64px rgba(0, 0, 0, 0.78);
+  flex-shrink: 0;
+}
+
+.moc-contact-sheet-card img,
+.moc-contact-sheet-card video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.moc-contact-sheet-caption {
+  position: absolute;
+  bottom: 5px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* ==========================================================================
+   MODE 4: FINE-ART MATTE PRINTS & SHUTTER APERTURE COLUMNS
+   ========================================================================== */
+.moc-polaroid-columns {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 28px;
+  padding: 0 40px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.moc-polaroid-col {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  will-change: transform;
+}
+
+.moc-polaroid-frame {
+  background: #f8f7f4;
+  color: #18181b;
+  padding: 10px 10px 30px 10px;
+  border-radius: 2px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.72);
+  position: relative;
+}
+
+.moc-polaroid-frame img,
+.moc-polaroid-frame video {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+  background: #18181b;
+}
+
+.moc-polaroid-exif {
+  position: absolute;
+  bottom: 7px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #52525b;
+  letter-spacing: 0.06em;
+}
+
+.moc-orbit-card-tag {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  font-size: 11px;
+  letter-spacing: -0.02em;
+}
+
+.moc-orbit-card-index {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.68);
+  background: rgba(0, 0, 0, 0.52);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+/* ==========================================================================
+   THANH CHỌN THỬ 4 HIỆU ỨNG CHO TỪNG SECTION (LUXURY MINIMALIST SWITCHER)
+   ========================================================================== */
+.moc-section-mode-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 10px;
+  margin: 0 auto 36px auto;
+  width: fit-content;
+  max-width: 94vw;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  position: relative;
+  z-index: 60;
+}
+
+.moc-section-mode-label {
+  font-size: 10px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.42);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0 12px;
+}
+
+.moc-section-mode-btn {
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  white-space: nowrap;
+}
+
+.moc-section-mode-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.moc-section-mode-btn.is-active {
+  color: #0a0a0a;
+  background: #ffffff;
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   SECTION 4 ("WORKS"): 4 PHOTOGRAPHY & CINEMA TRANSITION EFFECTS
+   ========================================================================== */
+.moc-kinetic-marquee {
+  width: 100vw;
+  height: auto;
+  background-color: #0a0a0a;
+  overflow: hidden;
+  position: relative;
+  padding: 36px 0;
+}
+
+.moc-kinetic-marquee-line {
+  width: 100%;
+  height: auto;
+  overflow: hidden;
+}
+
+.moc-kinetic-marquee-line--muted {
+  opacity: 0.2;
+}
+
+.moc-kinetic-marquee-rail {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  color: #ffffff;
+  font-size: 34vw;
+  font-weight: 300;
+  line-height: 80%;
+  letter-spacing: -0.08em;
+  margin: 0;
+  padding: 0;
+  will-change: transform;
+}
+
+.moc-kinetic-marquee-divider {
+  display: inline-block;
+  width: 15.6vw;
+  height: 5px;
+  background-color: #ffffff;
+  margin: 0 4vw;
+  vertical-align: middle;
+}
+
+/* Works Mode 1: Velocity Skew Typography + 35mm Film Strip */
+.moc-works-vel-band {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px 0;
+}
+
+.moc-works-vel-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 32px;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.moc-works-vel-word {
+  font-size: clamp(68px, 14vw, 220px);
+  font-weight: 300;
+  letter-spacing: -0.06em;
+  line-height: 0.9;
+  color: #ffffff;
+}
+
+.moc-works-vel-word--outline {
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.42);
+}
+
+.moc-works-vel-thumb {
+  width: clamp(140px, 16vw, 240px);
+  height: clamp(84px, 9.5vw, 140px);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.moc-works-vel-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Works Mode 2: Camera Shutter Aperture Reveal */
+.moc-works-shutter-wrap {
+  position: relative;
+  height: 62vh;
+  min-height: 420px;
+  margin: 0 30px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #111;
+}
+
+.moc-works-shutter-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.moc-works-shutter-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.55) contrast(1.08);
+}
+
+.moc-works-shutter-title {
+  position: relative;
+  z-index: 5;
+  text-align: center;
+}
+
+.moc-works-shutter-big {
+  font-size: clamp(72px, 16vw, 250px);
+  font-weight: 300;
+  letter-spacing: -0.07em;
+  line-height: 0.86;
+  color: #ffffff;
+  mix-blend-mode: difference;
+}
+
+/* Works Mode 3: Split Cinema Letterbox & Timecode */
+.moc-works-letterbox {
+  padding: 56px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.moc-works-letterbox-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 28px 0;
+}
+
+.moc-works-letterbox-word {
+  font-size: clamp(54px, 11vw, 175px);
+  font-weight: 300;
+  letter-spacing: -0.06em;
+  line-height: 0.9;
+}
+
+.moc-works-letterbox-frames {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.moc-works-letterbox-frame {
+  width: clamp(90px, 10vw, 150px);
+  height: clamp(64px, 7vw, 104px);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.moc-works-letterbox-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ==========================================================================
+   SECTION 5 ("SELECTED WORKS"): 4 INTERACTIVE GALLERY PATTERNS
+   ========================================================================== */
+.moc-works-section {
+  height: auto;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+  padding-top: 80px;
+  background-color: #0a0a0a;
+}
+
+/* Selected Works Mode 1: Awwwards Floating Cursor Gallery (Olivier Larose) */
+.moc-floating-lens-list {
+  position: relative;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.moc-floating-lens-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 38px 40px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  text-decoration: none;
+  color: #ffffff;
+  transition: padding 0.35s cubic-bezier(0.22, 1, 0.36, 1), background 0.35s ease;
+}
+
+.moc-floating-lens-row:hover {
+  padding-left: 60px;
+  padding-right: 60px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.moc-floating-lens-idx {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.48);
+  letter-spacing: 0.1em;
+}
+
+.moc-floating-lens-title {
+  font-size: clamp(32px, 5.2vw, 88px);
+  font-weight: 300;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  transition: transform 0.35s ease;
+}
+
+.moc-floating-lens-meta {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.moc-floating-lens-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 380px;
+  height: 270px;
+  border-radius: 8px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 80;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.78);
+  background: #111;
+}
+
+.moc-floating-lens-slider {
+  width: 100%;
+  height: 100%;
+  transition: transform 0.55s cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+.moc-floating-lens-slide {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d0d0f;
+}
+
+.moc-floating-lens-slide img,
+.moc-floating-lens-slide video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Selected Works Mode 2: Interactive Horizontal Film Accordion */
+.moc-accordion-gallery {
+  display: flex;
+  gap: 14px;
+  height: 68vh;
+  min-height: 480px;
+  padding: 0 30px;
+}
+
+.moc-accordion-panel {
+  position: relative;
+  flex: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #141417;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  cursor: pointer;
+  text-decoration: none;
+  color: #ffffff;
+  transition: flex 0.65s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.moc-accordion-panel.is-expanded {
+  flex: 3.6;
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.moc-accordion-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(28px) brightness(0.35);
+  transform: scale(1.1);
+}
+
+.moc-accordion-main-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  z-index: 2;
+  transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.moc-accordion-caption {
+  position: relative;
+  z-index: 5;
+  padding: 24px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.35) 65%, transparent 100%);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+/* Selected Works Mode 3: Editorial Split-Screen Lookbook */
+.moc-lookbook-split {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 36px;
+  padding: 0 30px;
+  align-items: center;
+}
+
+.moc-lookbook-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  text-decoration: none;
+  color: #ffffff;
+  border-radius: 10px;
+  transition: color 0.25s ease;
+}
+
+.moc-lookbook-row-highlight {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  z-index: 0;
+}
+
+.moc-lookbook-stage {
+  position: relative;
+  height: 58vh;
+  min-height: 430px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #121215;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.moc-lookbook-stage-main {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  z-index: 2;
+}
+
+.moc-lookbook-stage-secondary {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  width: 170px;
+  height: 115px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75);
+  z-index: 5;
+}
+
+.moc-lookbook-stage-secondary img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ==========================================================================
+   SECTION 6 ("FEATURED WORKS"): 4 FULL-IMAGE EXHIBITION SHOWCASES
+   ========================================================================== */
+/* Featured Mode 1: Sticky 3D Stacked Card Deck (Olivier Larose) */
+.moc-stack-deck-wrap {
+  padding: 20px 30px 80px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+.moc-stack-card-sticky {
+  position: sticky;
+  top: 72px;
+  height: 82vh;
+  min-height: 520px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #111114;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transform-origin: top center;
+  will-change: transform;
+}
+
+.moc-stack-card-thumbs {
+  position: absolute;
+  right: 36px;
+  bottom: 36px;
+  z-index: 30;
+  display: flex;
+  gap: 8px;
+  background: rgba(10, 10, 12, 0.78);
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+}
+
+.moc-stack-thumb-btn {
+  width: 58px;
+  height: 42px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  padding: 0;
+  background: #222;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+}
+
+.moc-stack-thumb-btn.is-active {
+  border-color: #fbbf24;
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
+.moc-stack-thumb-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Featured Mode 2: Sticky Horizontal Cinema Exhibition Reel */
+.moc-horiz-featured-track {
+  position: relative;
+  height: 360vh;
+}
+
+.moc-horiz-featured-sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.moc-horiz-featured-rail {
+  display: flex;
+  gap: 40px;
+  padding: 0 6vw;
+  will-change: transform;
+}
+
+.moc-horiz-featured-card {
+  position: relative;
+  width: 78vw;
+  max-width: 1180px;
+  height: 78vh;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #121215;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Featured Mode 3: Editorial Triptych 3-Frame Storyboard */
+.moc-triptych-list {
+  display: flex;
+  flex-direction: column;
+  gap: 72px;
+  padding: 20px 30px 80px 30px;
+}
+
+.moc-triptych-item {
+  background: #111114;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
+  padding: 28px;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+}
+
+.moc-triptych-item:hover {
+  border-color: rgba(255, 255, 255, 0.38);
+}
+
+.moc-triptych-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.85fr 1fr;
+  gap: 18px;
+  align-items: center;
+}
+
+.moc-triptych-side {
+  height: 44vh;
+  min-height: 280px;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  background: #09090b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.moc-triptych-center {
+  height: 62vh;
+  min-height: 400px;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  background: #09090b;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.moc-works-heading-bar {
+  display: flex;
+  width: 100%;
+  padding: 32px 30px;
+  align-items: flex-end;
+}
+
+.moc-works-heading-label {
+  flex: 1;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 150%;
+  letter-spacing: -0.03em;
+  opacity: 0.7;
+}
+
+.moc-works-heading-label--end {
+  text-align: right;
+}
+
+.moc-works-heading-quote {
+  width: auto;
+  max-width: 420px;
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 105%;
+  letter-spacing: -0.05em;
+  opacity: 0.75;
+  text-align: center;
+}
+
+.moc-works-item {
+  height: 200px;
+  display: flex;
+  width: 100%;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0 30px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  text-decoration: none;
+  color: #ffffff;
+}
+
+.moc-works-item:last-child {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.moc-works-item-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  z-index: 1;
+}
+
+.moc-works-item-sub {
+  flex: 1;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 150%;
+  letter-spacing: -0.03em;
+}
+
+.moc-works-item-sub--end {
+  text-align: right;
+}
+
+.moc-works-item-name {
+  width: auto;
+  color: #ffffff;
+  font-size: clamp(40px, 7.2vw, 136px);
+  font-weight: 300;
+  line-height: 100%;
+  letter-spacing: -0.07em;
+  text-align: center;
+  padding: 0 20px;
+}
+
+.moc-works-curtain {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #ffffff;
+  overflow: hidden;
+  clip-path: polygon(0 50%, 100% 50%, 100% 50%, 0 50%);
+  transform-origin: center;
+  transition: clip-path 0.4s cubic-bezier(0.1, 0.5, 0.5, 1);
+  z-index: 2;
+}
+
+.moc-works-item:hover .moc-works-curtain {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.moc-works-curtain-body {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  transform: translateY(40px);
+  transition: transform 0.6s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.moc-works-item:hover .moc-works-curtain-body {
+  transform: translateY(0px);
+}
+
+.moc-works-marquee-rail {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  flex-shrink: 0;
+  gap: 64px;
+  animation: mocMarqueeLoop 36s linear infinite;
+  will-change: transform;
+}
+
+.moc-works-marquee-unit {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.moc-works-marquee-name {
+  font-size: clamp(36px, 4.8vw, 84px);
+  font-weight: 300;
+  letter-spacing: -0.06em;
+  color: #0a0a0a;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.moc-works-marquee-mark {
+  height: 56px;
+  width: 114px;
+  min-width: 114px;
+  object-fit: contain;
+  flex-shrink: 0;
+  display: block;
+  position: relative;
+  z-index: 2;
+}
+
+.moc-works-marquee-capsule {
+  width: 300px;
+  min-width: 300px;
+  height: 125px;
+  border-radius: 999px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #e5e5e5;
+  position: relative;
+  z-index: 1;
+}
+
+.moc-works-marquee-capsule img,
+.moc-works-marquee-capsule video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+@keyframes mocMarqueeLoop {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* ==========================================================================
+   SECTION 6: STICKY CAPSULE-TO-FULLSCREEN SHOWCASE (FULL IMAGE DISPLAY)
+   ========================================================================== */
+.moc-featured-track {
+  height: 560vh;
+  position: relative;
+  background: transparent;
+  z-index: 1;
+}
+
+.moc-featured-stage {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  transform-origin: center center;
+  will-change: transform, border-radius;
+  background: #0a0a0a;
+  cursor: pointer;
+}
+
+.moc-featured-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0a0a;
+}
+
+.moc-featured-slide.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.moc-featured-slide-ambient {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(42px) brightness(0.35) saturate(1.1);
+  transform: scale(1.12);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.moc-featured-slide-media {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  z-index: 2;
+}
+
+.moc-featured-shade {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 40%;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.72) 0%,
+    rgba(0, 0, 0, 0.22) 55%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 10;
+}
+
+.moc-featured-caption {
+  position: absolute;
+  left: 60px;
+  right: 60px;
+  bottom: 64px;
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  pointer-events: none;
+}
+
+.moc-featured-name {
+  font-size: clamp(28px, 4.2vw, 68px);
+  font-weight: 400;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  margin: 0;
+  color: #ffffff;
+}
+
+.moc-featured-counter {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+
+.moc-featured-progress-row {
+  position: absolute;
+  bottom: 40px;
+  padding-left: 60px;
+  padding-right: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  width: 100%;
+  z-index: 100;
+}
+
+.moc-featured-progress-Segment {
+  flex: 1;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.22);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.moc-featured-progress-fill {
+  height: 100%;
+  background: #ffffff;
+  transform: translateZ(0);
+}
+
+/* ==========================================================================
+   SECTION 7: PARALLAX CONTACT FOOTER
+   ========================================================================== */
+.moc-footer-section {
+  height: 100vh;
+  width: 100vw;
+  background-color: #0a0a0a;
+  position: relative;
+  overflow: hidden;
+}
+
+.moc-footer-parallax-inner {
+  height: 100%;
+  width: 100%;
+  position: relative;
+  will-change: transform;
+}
+
+.moc-footer-portrait {
+  position: absolute;
+  left: 30px;
+  top: 30px;
+  bottom: 30px;
+  height: calc(100% - 60px);
+  width: min(38vw, 520px);
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.moc-footer-body {
+  position: absolute;
+  right: 30px;
+  bottom: 30px;
+  height: 66.2vh;
+  width: 38vw;
+  min-width: 470px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.moc-footer-headline {
+  max-width: 400px;
+  color: #ffffff;
+  font-weight: 400;
+  font-size: clamp(26px, 2.5vw, 38px);
+  line-height: 108%;
+  letter-spacing: -0.05em;
+}
+
+.moc-footer-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8vh;
+  width: 100%;
+}
+
+.moc-footer-mail-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.moc-footer-mail-label {
+  color: #ffffff;
+  opacity: 0.7;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 150%;
+  letter-spacing: -0.36px;
+}
+
+.moc-footer-mail-link {
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 110%;
+  letter-spacing: -0.8px;
+  text-decoration: none;
+}
+
+.moc-footer-mail-link:hover {
+  opacity: 0.75;
+}
+
+.moc-footer-socials {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+}
+
+/* ==========================================================================
+   PHOTOGRAPHER EDITION CSS FOR:
+   - SECTION 4 ("Works"): 35mm Perforated Film Roll & Loupe / 8-Blade Iris / Darkroom Clothesline / Shutter Strobe
+   - SECTION 5 ("Selected Works"): 5500K Backlit Light Table Slide Mounts / Leica Rangefinder Split-Prism / 35mm Film Canister Drawer
+   - SECTION 6 ("Featured Works"): Hasselblad Medium Format Viewfinder + Histogram + Filmstrip Dock / Director Storyboard / Museum Matte Frame
+   ========================================================================== */
+
+/* --- SECTION 4 ("Works") Mode 1: 35mm Perforated Film Roll & Photographer's Loupe --- */
+.moc-photog-works-stage {
+  position: relative;
+  width: 100%;
+  padding: 56px 0 64px;
+  overflow: hidden;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(251, 191, 36, 0.05) 0%,
+    rgba(8, 8, 10, 0.98) 72%
+  );
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.moc-filmroll-strip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 0;
+  margin: 14px 0;
+  background: #0d0d10;
+  border-top: 2px solid rgba(255, 255, 255, 0.16);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.16);
+  width: max-content;
+  will-change: transform;
+}
+
+/* Lỗ đục răng cưa chuẩn phim 35mm Kodak */
+.moc-filmroll-strip::before,
+.moc-filmroll-strip::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background-image: repeating-linear-gradient(
+    to right,
+    transparent 0px,
+    transparent 10px,
+    rgba(255, 255, 255, 0.35) 10px,
+    rgba(255, 255, 255, 0.35) 22px,
+    transparent 22px,
+    transparent 30px
+  );
+}
+.moc-filmroll-strip::before {
+  top: 5px;
+}
+.moc-filmroll-strip::after {
+  bottom: 5px;
+}
+
+.moc-filmroll-frame {
+  position: relative;
+  width: 240px;
+  height: 152px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #141418;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  flex-shrink: 0;
+  transition:
+    filter 0.35s ease,
+    transform 0.35s ease,
+    border-color 0.35s ease;
+  filter: grayscale(0.85) contrast(1.18) brightness(0.78);
+}
+
+.moc-filmroll-frame:hover {
+  filter: grayscale(0) contrast(1.04) brightness(1.05);
+  transform: scale(1.05);
+  border-color: #fbbf24;
+  z-index: 4;
+}
+
+.moc-filmroll-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.moc-filmroll-edge-code {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.14em;
+  color: #fbbf24;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95);
+  pointer-events: none;
+}
+
+/* Kính Lúp Soi Phim (Photographer's Loupe Magnifier) ở tâm màn hình */
+.moc-loupe-centerpiece {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(350px, 78vw);
+  height: min(350px, 78vw);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(16, 16, 20, 0.86) 0%,
+    rgba(6, 6, 8, 0.96) 100%
+  );
+  border: 3px solid rgba(251, 191, 36, 0.65);
+  box-shadow:
+    0 0 0 10px rgba(255, 255, 255, 0.04),
+    0 28px 80px rgba(0, 0, 0, 0.92),
+    inset 0 0 42px rgba(251, 191, 36, 0.16);
+  backdrop-filter: blur(8px);
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  pointer-events: none;
+}
+
+.moc-loupe-ring-markings {
+  font-size: 9px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.22em;
+  color: #fbbf24;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.moc-loupe-title {
+  font-size: clamp(44px, 5.2vw, 76px);
+  font-weight: 300;
+  letter-spacing: -0.06em;
+  line-height: 0.95;
+  color: #ffffff;
+  margin: 4px 0 8px;
+}
+
+.moc-loupe-sub {
+  font-size: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.65);
+  text-transform: uppercase;
+}
+
+/* --- SECTION 4 ("Works") Mode 3: Camera Optical Iris Aperture Reveal --- */
+.moc-iris-stage {
+  position: relative;
+  padding: 64px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.moc-iris-barrel {
+  position: relative;
+  width: min(480px, 88vw);
+  height: min(480px, 88vw);
+  border-radius: 50%;
+  background: radial-gradient(circle, #141418 0%, #070709 100%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 0 0 12px #0b0b0e,
+    0 0 0 13px rgba(255, 255, 255, 0.1),
+    0 32px 90px rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.moc-iris-opening {
+  position: relative;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.moc-iris-opening img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.moc-iris-ring-text {
+  position: absolute;
+  inset: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.45);
+  pointer-events: none;
+}
+
+/* --- SECTION 4 ("Works") Mode 3: Darkroom Developing Clothesline --- */
+.moc-darkroom-stage {
+  position: relative;
+  padding: 54px 20px 64px;
+  background: radial-gradient(
+    ellipse at 50% 0%,
+    rgba(220, 38, 38, 0.16) 0%,
+    rgba(10, 10, 12, 0.98) 70%
+  );
+  overflow: hidden;
+}
+
+.moc-darkroom-wire {
+  position: relative;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 255, 255, 0.45),
+    rgba(255, 255, 255, 0.08)
+  );
+  margin: 18px 0 30px;
+}
+
+.moc-darkroom-prints-row {
+  display: flex;
+  gap: 28px;
+  justify-content: center;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding: 10px 24px 24px;
+}
+
+.moc-darkroom-print-hang {
+  position: relative;
+  width: 220px;
+  flex-shrink: 0;
+  background: #f5f5f0;
+  padding: 10px 10px 28px;
+  border-radius: 3px;
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.75);
+  transform-origin: top center;
+  transition: filter 0.4s ease;
+}
+
+/* Cái kẹp phơi ảnh phòng tối */
+.moc-darkroom-clip {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 24px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #d97706 0%, #92400e 100%);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+  z-index: 3;
+}
+
+.moc-darkroom-print-hang img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  display: block;
+  background: #111;
+}
+
+.moc-darkroom-print-note {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #18181b;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* --- SECTION 5 ("Selected Works") Mode 3: Curated Contact Grid (Clean Dark Glass) --- */
+.moc-lighttable-surface {
+  position: relative;
+  margin: 12px 30px 48px;
+  padding: 0;
+  background: transparent;
+}
+
+.moc-lighttable-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 18px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.48);
+  text-transform: uppercase;
+}
+
+.moc-lighttable-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 28px;
+}
+
+.moc-slide-mount {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: #0d0d10;
+  color: #ffffff;
+  padding: 18px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-decoration: none;
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.65);
+  transition:
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.4s ease,
+    box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.moc-slide-mount:hover {
+  transform: translateY(-6px);
+  border-color: rgba(255, 255, 255, 0.32);
+  box-shadow: 0 32px 72px rgba(0, 0, 0, 0.85);
+}
+
+.moc-slide-mount-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.moc-slide-window {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: #070709;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.moc-slide-window img,
+.moc-slide-window video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.moc-slide-mount:hover .moc-slide-window img,
+.moc-slide-mount:hover .moc-slide-window video {
+  transform: scale(1.04);
+}
+
+.moc-chinagraph-circle {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(10, 10, 12, 0.72);
+  backdrop-filter: blur(8px);
+  z-index: 3;
+}
+
+.moc-slide-substrip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.moc-slide-subcell {
+  height: 52px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: #070709;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  opacity: 0.75;
+  transition: opacity 0.3s ease;
+}
+
+.moc-slide-mount:hover .moc-slide-subcell {
+  opacity: 1;
+}
+
+.moc-slide-subcell img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.moc-slide-mount-footer {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.moc-slide-couple-name {
+  font-size: 1.25rem;
+  font-weight: 300;
+  letter-spacing: -0.04em;
+  color: #ffffff;
+  margin: 0;
+}
+
+.moc-slide-exif-tag {
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.48);
+  white-space: nowrap;
+}
+
+/* --- SECTION 5 ("Selected Works") Mode 1 (Locked): Sticky Fullscreen 100vw x 100vh Rangefinder Monograph --- */
+.moc-rangefinder-track {
+  position: relative;
+  width: 100vw;
+  height: 280vh;
+  background: #070709;
+}
+
+.moc-rangefinder-layout {
+  position: sticky;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 1.3fr 0.85fr;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background: #070709;
+  overflow: hidden;
+}
+
+.moc-rangefinder-screen {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #070709;
+  z-index: 1;
+}
+
+.moc-rangefinder-bg-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  filter: blur(18px) brightness(1.08) contrast(0.94);
+  transform: scale(1.06);
+  transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform, filter;
+  pointer-events: none;
+}
+
+.moc-rangefinder-bg-layer.is-active {
+  opacity: 1;
+  filter: blur(0px) brightness(1) contrast(1.04);
+  transform: scale(1);
+  animation: mocCameraFocusPull 0.68s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Hiệu ứng ống kính máy ảnh xoay vòng lấy nét thật:
+   Mờ Bokeh (18px) + Lens Breathing (1.065) -> Vượt qua mặt phẳng nét (Hunt 0.995) -> Khóa nét sắc lẹm (0px, 1.0) */
+@keyframes mocCameraFocusPull {
+  0% {
+    filter: blur(18px) brightness(1.12) contrast(0.92);
+    transform: scale(1.065);
+  }
+  48% {
+    filter: blur(2.5px) brightness(1.03) contrast(1.02);
+    transform: scale(0.995);
+  }
+  74% {
+    filter: blur(0.8px) brightness(1.01) contrast(1.03);
+    transform: scale(1.003);
+  }
+  100% {
+    filter: blur(0px) brightness(1) contrast(1.04);
+    transform: scale(1);
+  }
+}
+
+/* Khung ngắm Autofocus 4 góc chữ L + Cửa sổ chập bóng Rangefinder */
+@keyframes mocAfBracketSnap {
+  0% {
+    transform: translate(-50%, -50%) scale(1.26);
+    opacity: 0.45;
+  }
+  52% {
+    transform: translate(-50%, -50%) scale(0.95);
+    opacity: 1;
+  }
+  78% {
+    transform: translate(-50%, -50%) scale(1.02);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Bóng ma lăng kính chập nét ngang (Split-Prism Ghost Alignment) */
+@keyframes mocSplitPrismAlign {
+  0% {
+    transform: translateX(-22px) scale(1.05);
+    opacity: 0.72;
+    filter: blur(4px) contrast(1.15);
+  }
+  50% {
+    transform: translateX(6px) scale(1.01);
+    opacity: 0.48;
+    filter: blur(1px) contrast(1.08);
+  }
+  100% {
+    transform: translateX(0px) scale(1);
+    opacity: 0;
+    filter: blur(0px);
+  }
+}
+
+.moc-rangefinder-screen img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.moc-rangefinder-screen-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(6, 6, 8, 0.22) 0%,
+    rgba(6, 6, 8, 0.35) 54%,
+    rgba(6, 6, 8, 0.86) 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+.moc-rangefinder-left-stage {
+  position: relative;
+  z-index: 6;
+  height: 100vh;
+  padding: 44px 52px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.moc-rangefinder-right-index {
+  position: relative;
+  z-index: 6;
+  height: 100vh;
+  padding: 36px 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(8, 8, 10, 0.38);
+  backdrop-filter: blur(10px);
+}
+
+.moc-rangefinder-reticle {
+  position: absolute;
+  top: 48%;
+  left: 31%;
+  transform: translate(-50%, -50%);
+  width: 210px;
+  height: 136px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 4;
+  animation: mocAfBracketSnap 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.moc-rangefinder-reticle::before,
+.moc-rangefinder-reticle::after {
+  content: '';
+  position: absolute;
+  background: rgba(255, 255, 255, 0.35);
+}
+.moc-rangefinder-reticle::before {
+  width: 24px;
+  height: 1px;
+}
+.moc-rangefinder-reticle::after {
+  width: 1px;
+  height: 24px;
+}
+
+/* 4 góc ngàm lấy nét chữ L chuẩn kính ngắm máy ảnh */
+.moc-af-corner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-color: rgba(255, 255, 255, 0.92);
+  border-style: solid;
+  border-width: 0;
+}
+.moc-af-corner--tl {
+  top: -1px;
+  left: -1px;
+  border-top-width: 1.5px;
+  border-left-width: 1.5px;
+}
+.moc-af-corner--tr {
+  top: -1px;
+  right: -1px;
+  border-top-width: 1.5px;
+  border-right-width: 1.5px;
+}
+.moc-af-corner--bl {
+  bottom: -1px;
+  left: -1px;
+  border-bottom-width: 1.5px;
+  border-left-width: 1.5px;
+}
+.moc-af-corner--br {
+  bottom: -1px;
+  right: -1px;
+  border-bottom-width: 1.5px;
+  border-right-width: 1.5px;
+}
+
+/* Lớp bóng ma chập nét (Split-Prism Ghost Image) chạy ngang khi máy đang lấy nét */
+.moc-af-ghost-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  mix-blend-mode: screen;
+  clip-path: inset(28% 36% 28% 36% round 2px);
+  animation: mocSplitPrismAlign 0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.moc-af-ghost-layer img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.moc-lookbook-viewer-hud {
+  position: relative;
+  z-index: 8;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.moc-lookbook-thumbs {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.moc-lookbook-thumb {
+  width: 72px;
+  height: 50px;
+  border-radius: 2px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  opacity: 0.55;
+  transition: all 0.25s ease;
+}
+
+.moc-lookbook-thumb:hover {
+  opacity: 1;
+}
+
+.moc-lookbook-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.moc-lookbook-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.48);
+  transition:
+    color 0.35s ease,
+    padding-left 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.35s ease;
+}
+
+.moc-lookbook-list-item:first-child {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.moc-lookbook-list-item:hover,
+.moc-lookbook-list-item.is-active {
+  color: #ffffff;
+  padding-left: 30px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.moc-lookbook-list-name {
+  font-size: clamp(20px, 2.3vw, 36px);
+  font-weight: 300;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+
+/* --- SECTION 5 ("Selected Works") Mode 4: Vertical Editorial Drawer --- */
+.moc-canister-list {
+  padding: 12px 30px 48px;
+  display: flex;
+  flex-direction: column;
+}
+
+.moc-canister-row {
+  display: flex;
+  flex-direction: column;
+  padding: 26px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  text-decoration: none;
+  color: #ffffff;
+  transition:
+    background 0.35s ease,
+    padding-left 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.moc-canister-row:first-child {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.moc-canister-row:hover,
+.moc-canister-row.is-open {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.moc-canister-strip-drawer {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.moc-canister-cell {
+  position: relative;
+  height: 128px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: #0d0d10;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.moc-canister-cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.moc-canister-row:hover .moc-canister-cell img {
+  transform: scale(1.04);
+}
+
+/* ==========================================================================
+   SECTION 6 ("FEATURED WORKS"): 4 AWWWARDS SCROLL-DRIVEN CINEMA SHOWCASES
+   - Mode I (Default): Sticky Capsule-to-Fullscreen & Vertical Curtain Wipe
+   - Mode II: Sticky Split-Screen Fine-Art Photobook Spread (50/50)
+   - Mode III: Editorial 3-Panel Cinemascope Parallax Chapters
+   - Mode IV: Full-Bleed Parallax Windows & Giant Floating Center Title
+   ========================================================================== */
+
+/* --- Featured Mode I (Default): Sticky Capsule-to-Fullscreen & Vertical Curtain Wipe --- */
+.moc-feat-wipe-track {
+  position: relative;
+  height: 480vh;
+  background: #0a0a0a;
+}
+
+.moc-feat-wipe-sticky {
+  position: sticky;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0a0a;
+}
+
+.moc-feat-wipe-portal {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: pointer;
+  will-change: clip-path;
+}
+
+.moc-feat-wipe-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0a0a0a;
+  will-change: clip-path;
+}
+
+.moc-feat-wipe-layer img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: brightness(0.86) contrast(1.04);
+  will-change: transform;
+}
+
+/* --- Featured Mode II: Sticky Split-Screen Fine-Art Photobook Spread --- */
+.moc-feat-book-track {
+  position: relative;
+  height: 460vh;
+  background: #0a0a0a;
+}
+
+.moc-feat-book-sticky {
+  position: sticky;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  background: #0a0a0a;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.moc-feat-book-left {
+  position: relative;
+  padding: 56px 64px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  background: #0a0a0a;
+  z-index: 5;
+}
+
+.moc-feat-book-inset {
+  width: 220px;
+  height: 280px;
+  border-radius: 2px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: #0e0e12;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.78);
+}
+
+.moc-feat-book-inset img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.moc-feat-book-right {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #070709;
+  cursor: pointer;
+}
+
+/* --- Featured Mode III: Editorial 3-Panel Cinemascope Parallax Chapters --- */
+.moc-feat-triptych-list {
+  padding: 28px 30px 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 112px;
+  max-width: 1480px;
+  margin: 0 auto;
+}
+
+.moc-feat-triptych-chapter {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  cursor: pointer;
+}
+
+.moc-feat-triptych-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.moc-feat-triptych-row {
+  display: grid;
+  grid-template-columns: 1fr 1.65fr 1fr;
+  gap: 24px;
+  align-items: center;
+}
+
+.moc-feat-triptych-wing {
+  position: relative;
+  height: 48vh;
+  min-height: 320px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #0c0c0f;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  will-change: transform;
+}
+
+.moc-feat-triptych-centerpiece {
+  position: relative;
+  height: 68vh;
+  min-height: 460px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #0c0c0f;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 32px 84px rgba(0, 0, 0, 0.82);
+  will-change: transform;
+}
+
+.moc-feat-triptych-wing img,
+.moc-feat-triptych-centerpiece img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.moc-feat-triptych-chapter:hover .moc-feat-triptych-wing img,
+.moc-feat-triptych-chapter:hover .moc-feat-triptych-centerpiece img {
+  transform: scale(1.04);
+}
+
+/* --- Featured Mode IV: Full-Bleed Parallax Windows & Giant Floating Title --- */
+.moc-feat-pillar-list {
+  padding: 20px 30px 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+.moc-feat-pillar-window {
+  position: relative;
+  width: 100%;
+  height: 86vh;
+  min-height: 540px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #08080a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.moc-feat-pillar-bg {
+  position: absolute;
+  inset: -12% 0;
+  width: 100%;
+  height: 124%;
+  will-change: transform;
+}
+
+.moc-feat-pillar-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: brightness(0.68) contrast(1.05);
+  transition: filter 0.6s ease, transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.moc-feat-pillar-window:hover .moc-feat-pillar-bg img {
+  filter: brightness(0.82) contrast(1.06);
+  transform: scale(1.03);
+}
+
+.moc-feat-pillar-center {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  pointer-events: none;
+  padding: 0 24px;
+}
+
+.moc-feat-pillar-title {
+  font-size: clamp(46px, 7.2vw, 128px);
+  font-weight: 300;
+  letter-spacing: -0.06em;
+  line-height: 0.94;
+  color: #ffffff;
+  margin: 10px 0 14px;
+  text-shadow: 0 18px 48px rgba(0, 0, 0, 0.75);
+}
+
+.moc-feat-pillar-float {
+  position: absolute;
+  width: 210px;
+  height: 270px;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 28px 64px rgba(0, 0, 0, 0.85);
+  z-index: 8;
+  opacity: 0;
+  transform: translateY(18px) scale(0.95);
+  transition:
+    opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.moc-feat-pillar-float--tl {
+  top: 42px;
+  left: 48px;
+}
+
+.moc-feat-pillar-float--br {
+  bottom: 42px;
+  right: 48px;
+}
+
+.moc-feat-pillar-window:hover .moc-feat-pillar-float {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.moc-feat-pillar-float img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ==========================================================================
+   MONUMENTAL ARCHITECTURAL CHAPTER TRANSITIONS FOR SECTION 4 ("WORKS")
+   (Awwwards + Motion.dev — Zero Horizontal Marquee):
+   - Mode I (Default): Architectural Clip-Path Curtain & Blend-Difference "Works"
+   - Mode II: Pure Monumental Split-Character Rise & Optical Focus
+   - Mode III: Asymmetric Editorial Counter-Parallax Diptych
+   - Mode IV: Split-Horizon Focal-Plane Shutter Gate
+   ========================================================================== */
+
+/* --- Works Mode I (Default): Architectural Clip-Path Curtain & Blend-Difference "Works" --- */
+.moc-works-curtain-stage {
+  position: relative;
+  width: 100%;
+  height: 86vh;
+  min-height: 540px;
+  padding: 36px 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  overflow: hidden;
+  background: #0a0a0a;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.moc-works-chapter-meta {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  z-index: 15;
+}
+
+.moc-works-curtain-center {
+  position: relative;
+  width: 100%;
+  max-width: 1320px;
+  height: 60vh;
+  min-height: 360px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.moc-works-curtain-mask {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #0d0d10;
+  z-index: 2;
+  will-change: clip-path;
+}
+
+.moc-works-curtain-mask img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: brightness(0.78) contrast(1.06);
+  will-change: transform;
+}
+
+.moc-works-curtain-word {
+  position: relative;
+  z-index: 10;
+  font-size: clamp(92px, 22vw, 340px);
+  font-weight: 300;
+  letter-spacing: -0.07em;
+  line-height: 0.85;
+  color: #ffffff;
+  mix-blend-mode: difference;
+  user-select: none;
+  pointer-events: none;
+  will-change: transform, letter-spacing;
+}
+
+/* --- Works Mode II: Pure Monumental Split-Character Rise & Optical Blur --- */
+.moc-works-monolith-stage {
+  position: relative;
+  width: 100%;
+  min-height: 76vh;
+  padding: 48px 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  background: #0a0a0a;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.moc-works-monolith-chars {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  overflow: hidden;
+  padding: 20px 12px;
+  width: 100%;
+}
+
+.moc-works-monolith-char {
+  display: inline-block;
+  font-size: clamp(104px, 25vw, 390px);
+  font-weight: 300;
+  letter-spacing: -0.07em;
+  line-height: 0.86;
+  color: #ffffff;
+  will-change: transform, filter, opacity;
+}
+
+/* --- Works Mode III: Asymmetric Editorial Counter-Parallax Diptych --- */
+.moc-works-diptych-stage {
+  position: relative;
+  width: 100%;
+  padding: 72px 30px 84px;
+  background: #0a0a0a;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.moc-works-diptych-grid {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 56px;
+  align-items: center;
+}
+
+.moc-works-diptych-title {
+  font-size: clamp(84px, 16vw, 240px);
+  font-weight: 300;
+  letter-spacing: -0.07em;
+  line-height: 0.88;
+  color: #ffffff;
+  margin: 18px 0 28px;
+}
+
+.moc-works-diptych-frames {
+  position: relative;
+  height: 520px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.moc-works-diptych-tall {
+  width: 68%;
+  height: 460px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #0c0c0f;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.82);
+  will-change: transform;
+}
+
+.moc-works-diptych-wide {
+  position: absolute;
+  left: 0;
+  bottom: 16px;
+  width: 56%;
+  height: 240px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #0e0e12;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 28px 64px rgba(0, 0, 0, 0.9);
+  z-index: 4;
+  will-change: transform;
+}
+
+.moc-works-diptych-tall img,
+.moc-works-diptych-wide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* --- Works Mode IV: Split-Horizon Focal-Plane Shutter Gate --- */
+.moc-works-gate-stage {
+  position: relative;
+  width: 100%;
+  padding: 72px 0;
+  background: #0a0a0a;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.moc-works-gate-window {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+  background: #070709;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  will-change: height;
+}
+
+.moc-works-gate-window img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.62) contrast(1.08);
+  will-change: transform;
+}
+
+/* --- Selected Works Mode 2: Asymmetric Vertical Parallax Exhibition Wall --- */
+.moc-vertical-wall {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 48px;
+  padding: 28px 36px 72px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.moc-wall-column {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  will-change: transform;
+}
+
+.moc-wall-exhibit-card {
+  position: relative;
+  display: block;
+  text-decoration: none;
+  color: #ffffff;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #0c0c0f;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 28px 68px rgba(0, 0, 0, 0.75);
+  transition:
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.4s ease,
+    box-shadow 0.55s ease;
+}
+
+.moc-wall-exhibit-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 36px 84px rgba(0, 0, 0, 0.9);
+}
+
+.moc-wall-exhibit-img {
+  position: relative;
+  width: 100%;
+  height: 410px;
+  overflow: hidden;
+  background: #070709;
+}
+
+.moc-wall-exhibit-img img,
+.moc-wall-exhibit-img video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.moc-wall-exhibit-card:hover .moc-wall-exhibit-img img,
+.moc-wall-exhibit-card:hover .moc-wall-exhibit-img video {
+  transform: scale(1.04);
+}
+
+.moc-wall-exhibit-caption {
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0b0b0e;
+}
+
+@media (max-width: 1023px) {
+  .moc-works-diptych-grid,
+  .moc-vertical-wall,
+  .moc-feat-book-sticky,
+  .moc-feat-triptych-row {
+    grid-template-columns: 1fr;
+  }
+  .moc-feat-book-left {
+    padding: 28px 20px;
+  }
+  .moc-feat-book-inset {
+    display: none;
+  }
+  .moc-rangefinder-layout,
+  .moc-director-grid {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .moc-canister-strip-drawer {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .moc-hasselblad-bottom-dock {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .moc-header-blend {
+    left: 16px;
+    right: 16px;
+    top: 16px;
+  }
+
+  .moc-hero-caption--left {
+    top: auto;
+    bottom: 84px;
+    left: 16px;
+    width: 44vw;
+  }
+
+  .moc-hero-caption--right {
+    top: auto;
+    bottom: 84px;
+    right: 16px;
+    width: 44vw;
+  }
+
+  .moc-hero-caption--bl {
+    left: 16px;
+  }
+
+  .moc-hero-caption--br {
+    right: 16px;
+  }
+
+  .moc-philosophy-section {
+    padding: 96px 16px;
+  }
+
+  .moc-works-heading-bar {
+    padding: 24px 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .moc-works-heading-quote {
+    order: -1;
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .moc-works-item {
+    height: 132px;
+    padding: 0 16px;
+  }
+
+  .moc-works-item-sub {
+    font-size: 13px;
+  }
+
+  .moc-featured-caption {
+    left: 20px;
+    right: 20px;
+    bottom: 56px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .moc-featured-progress-row {
+    padding-left: 20px;
+    padding-right: 20px;
+    bottom: 24px;
+  }
+
+  .moc-footer-portrait {
+    position: relative;
+    left: 16px;
+    top: 24px;
+    width: calc(100% - 32px);
+    height: 38vh;
+  }
+
+  .moc-footer-body {
+    left: 16px;
+    right: 16px;
+    bottom: 24px;
+    width: auto;
+    min-width: 0;
+    height: 48vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moc-stage-page *,
+  .moc-stage-page *::before,
+  .moc-stage-page *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

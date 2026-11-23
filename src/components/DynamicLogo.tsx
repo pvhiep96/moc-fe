@@ -17,7 +17,8 @@ const DynamicLogo: React.FC<DynamicLogoProps> = ({
     >
       <div className="logo-container">
         <Image
-          src="/moc_nguyen_production_black.png"
+          src="/moc-logo.webp"
+          unoptimized
           alt="MOC Productions Logo"
           width={width}
           height={height}

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import localFont from 'next/font/local';
 import "./globals.css";
+import { SiteContentProvider } from "@/content/SiteContentProvider";
+import { fetchSiteContent } from "@/services/server";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -10,12 +12,15 @@ const geistSans = Geist({
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
+  preload: false,
   subsets: ["latin"],
 });
 
+// Không preload: font 240KB này chưa được dùng ở trang nào (class font-mon-cheri chưa được áp dụng)
 const monCheri = localFont({
   src: '../../public/DFVN TAN - MON CHERI.ttf',
-  variable: '--font-mon-cheri'
+  variable: '--font-mon-cheri',
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -34,17 +39,23 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const siteContent = await fetchSiteContent();
   return (
     <html lang="en">
+      <head>
+        {/* Ảnh project nằm trên Google CDN: mở kết nối sớm để giảm thời gian tải ảnh đầu tiên */}
+        <link rel="preconnect" href="https://lh3.googleusercontent.com" />
+        <link rel="dns-prefetch" href="https://lh3.googleusercontent.com" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <SiteContentProvider initialValues={siteContent}>{children}</SiteContentProvider>
       </body>
     </html>
   );

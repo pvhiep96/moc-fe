@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 // Get API URL from environment variables with fallback
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3006/api';
@@ -16,6 +17,7 @@ const nextConfig: NextConfig = {
   /* Base config options */
   reactStrictMode: true,
   poweredByHeader: false,
+  outputFileTracingRoot: path.join(__dirname),
   
   /* Images config */
   images: {

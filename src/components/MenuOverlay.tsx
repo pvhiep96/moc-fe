@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSiteContent } from '@/content/SiteContentProvider';
 
 interface MenuOverlayProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface MenuOverlayProps {
 
 const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
   const [mounted, setMounted] = useState(false);
+  const { t, e } = useSiteContent();
 
   // Log when props change
 
@@ -78,7 +80,7 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
             <div className="w-1/3">
               <Link href="/" onClick={onClose}>
                 <img
-                  src="/moc_nguyen_production_black.png"
+                  src="/moc-logo.webp"
                   alt="MOC Production Logo"
                   className="h-[40px] md:h-auto md:w-[100px] md:w-[120px] w-auto object-contain invert" // Sử dụng invert để đảo ngược màu đen thành trắng
                 />
@@ -88,7 +90,8 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
             {/* Social links at top right */}
             <div className="w-1/3 flex justify-end gap-4 text-xs md:text-sm">
               <Link
-                href="https://www.facebook.com/mocnguyen.productions"
+                href={t('social_facebook')}
+                {...e('social_facebook')}
                 target="_blank"
                 onClick={onClose}
                 className="hover:opacity-70 transition-all duration-300"
@@ -96,7 +99,8 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
                 FACEBOOK
               </Link>
               <Link
-                href="https://www.instagram.com/mocnguyenproductions/"
+                href={t('social_instagram')}
+                {...e('social_instagram')}
                 target="_blank"
                 onClick={onClose}
                 className="hover:opacity-70 transition-all duration-300"
@@ -104,7 +108,8 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
                 INSTAGRAM
               </Link>
               <Link
-                href="https://www.youtube.com/@MocNguyenProductions"
+                href={t('social_youtube')}
+                {...e('social_youtube')}
                 target="_blank"
                 onClick={onClose}
                 className="hover:opacity-70 transition-all duration-300"
@@ -122,15 +127,25 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
                 href="/"
                 onClick={onClose}
                 className="hover:opacity-70 transition-all duration-300"
+                {...e('menu_home_label')}
               >
-                PROJECTS
+                {t('menu_home_label')}
+              </Link>
+              <Link
+                href="/studio"
+                onClick={onClose}
+                className="hover:opacity-70 transition-all duration-300"
+                {...e('menu_projects_label')}
+              >
+                {t('menu_projects_label')}
               </Link>
               <Link
                 href="/about"
                 onClick={onClose}
                 className="hover:opacity-70 transition-all duration-300"
+                {...e('menu_about_label')}
               >
-                ABOUT US
+                {t('menu_about_label')}
               </Link>
             </div>
 
@@ -152,8 +167,9 @@ const MenuOverlay: React.FC<MenuOverlayProps> = ({ isOpen, onClose }) => {
               href="/contact"
               onClick={onClose}
               className="hover:opacity-70 transition-all duration-300"
+              {...e('menu_contact_label')}
             >
-              CONTACT
+              {t('menu_contact_label')}
             </Link>
           </div>
         </div>

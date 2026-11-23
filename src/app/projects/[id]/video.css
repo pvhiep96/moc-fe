@@ -118,3 +118,38 @@
     object-fit: contain !important;
   }
 }
+
+/* Trang chi tiết: desktop cuộn ngang (trước đây được inject bằng JS mỗi lần mount) */
+@media (min-width: 768px) {
+  body.horizontal-scroll {
+    overflow-x: hidden;
+    overflow-y: hidden;
+    overscroll-behavior-y: none;
+  }
+  .horizontal-scroll-container {
+    overscroll-behavior-y: none;
+    overscroll-behavior-x: auto;
+    touch-action: pan-x;
+    scrollbar-width: none;
+  }
+  .horizontal-scroll-container::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  body.horizontal-scroll {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+}
+
+/* Hiệu ứng khi số đếm ảnh thay đổi */
+@keyframes counterPop {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.counter-pop {
+  display: inline-block;
+  animation: counterPop 0.3s ease-out;
+}

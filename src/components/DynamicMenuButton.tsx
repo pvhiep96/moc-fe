@@ -11,6 +11,7 @@ const DynamicMenuButton: React.FC<DynamicMenuButtonProps> = ({ menuOpen, setMenu
   return (
     <button
       onClick={() => setMenuOpen(!menuOpen)}
+      data-moc-menu-toggle
       className="menu-button fixed right-6 md:right-8 top-1/2 -translate-y-1/2 flex flex-col items-center"
     >
       <div

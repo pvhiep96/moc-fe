@@ -1,9 +1,15 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import MenuOverlay from '@/components/MenuOverlay'
+import { MultilineText, useSiteContent } from '@/content/SiteContentProvider'
+
+type PackageContent = { name: string; description: string; price: string; features?: string[]; popular?: boolean };
+type OptionContent = { name: string; description: string; price: string };
+
+const toPrice = (raw: unknown) => Number(String(raw ?? '').replace(/[^\d.]/g, '')) || 0;
 
 // Định nghĩa kiểu dữ liệu cho các gói dịch vụ
 type ServicePackage = {
@@ -28,72 +34,32 @@ const PricingPage = () => {
   // State cho menu
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // State cho các gói dịch vụ
-  const [packages, setPackages] = useState<ServicePackage[]>([
-    {
-      id: 1,
-      name: "Basic Package",
-      description: "Perfect for small events and personal projects",
-      basePrice: 500,
-      features: ["2 hours of shooting", "50 edited photos", "Digital delivery", "1 photographer"],
-      popular: false
-    },
-    {
-      id: 2,
-      name: "Standard Package",
-      description: "Our most popular choice for events and commercial projects",
-      basePrice: 1200,
-      features: ["4 hours of shooting", "150 edited photos", "Digital delivery", "2 photographers", "Basic retouching"],
-      popular: true
-    },
-    {
-      id: 3,
-      name: "Premium Package",
-      description: "Complete coverage for professional needs",
-      basePrice: 2500,
-      features: ["Full day shooting", "300+ edited photos", "Digital delivery", "2 photographers", "Advanced retouching", "Printed photo album"],
-      popular: false
-    }
-  ]);
-
-  // State cho các tùy chọn bổ sung
-  const [options, setOptions] = useState<ServiceOption[]>([
-    {
-      id: 1,
-      name: "Additional Hour",
-      description: "Extend your shooting time",
-      price: 150,
-      selected: false
-    },
-    {
-      id: 2,
-      name: "Extra Photographer",
-      description: "Add another professional to your team",
-      price: 300,
-      selected: false
-    },
-    {
-      id: 3,
-      name: "Rush Delivery",
-      description: "Get your photos within 48 hours",
-      price: 200,
-      selected: false
-    },
-    {
-      id: 4,
-      name: "Drone Photography",
-      description: "Aerial shots of your event or location",
-      price: 350,
-      selected: false
-    },
-    {
-      id: 5,
-      name: "Video Highlights",
-      description: "3-5 minute highlight video of your event",
-      price: 500,
-      selected: false
-    }
-  ]);
+  // Gói dịch vụ & tùy chọn: nội dung do admin sửa (Sửa giao diện website → Bảng giá)
+  const { t, list, e } = useSiteContent();
+  const packages = useMemo<ServicePackage[]>(
+    () =>
+      list<PackageContent>('pricing_packages').map((pkg, idx) => ({
+        id: idx + 1,
+        name: pkg.name,
+        description: pkg.description,
+        basePrice: toPrice(pkg.price),
+        features: pkg.features || [],
+        popular: Boolean(pkg.popular),
+      })),
+    [list]
+  );
+  const [selectedOptionIds, setSelectedOptionIds] = useState<number[]>([]);
+  const options = useMemo<ServiceOption[]>(
+    () =>
+      list<OptionContent>('pricing_options').map((opt, idx) => ({
+        id: idx + 1,
+        name: opt.name,
+        description: opt.description,
+        price: toPrice(opt.price),
+        selected: selectedOptionIds.includes(idx + 1),
+      })),
+    [list, selectedOptionIds]
+  );
 
   // State cho gói được chọn
   const [selectedPackage, setSelectedPackage] = useState<ServicePackage | null>(null);
@@ -124,12 +90,8 @@ const PricingPage = () => {
 
   // Xử lý chọn tùy chọn bổ sung
   const handleToggleOption = (optionId: number) => {
-    setOptions(prevOptions =>
-      prevOptions.map(option =>
-        option.id === optionId
-          ? { ...option, selected: !option.selected }
-          : option
-      )
+    setSelectedOptionIds(prev =>
+      prev.includes(optionId) ? prev.filter(id => id !== optionId) : [...prev, optionId]
     );
   };
 
@@ -265,6 +227,7 @@ const PricingPage = () => {
       {/* Vertical Menu Button */}
       <button
         onClick={() => setMenuOpen(!menuOpen)}
+        data-moc-menu-toggle
         className="fixed right-6 md:right-8 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center"
       >
         <div className="vertical-text text-black text-lg md:text-xl uppercase tracking-wider font-medium">
@@ -298,14 +261,14 @@ const PricingPage = () => {
       {/* Center Logo */}
       <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 hidden md:block">
         <Link href="/">
-          <Image src="/moc_nguyen_production_black.png" alt="Center Logo" width={120} height={120} className="w-[120px] md:w-[150px] cursor-pointer" />
+          <Image unoptimized src="/moc-logo.webp" alt="Center Logo" width={120} height={120} className="w-[120px] md:w-[150px] cursor-pointer" />
         </Link>
       </div>
 
       {/* Logo top center cho mobile */}
       <div className="md:hidden absolute top-4 left-1/2 transform -translate-x-1/2 z-50 px-4 py-2">
         <Link href="/">
-          <Image src="/moc_nguyen_production_black.png" alt="Moc Productions" width={100} height={30} className="w-[120px] md:w-[150px] cursor-pointer" />
+          <Image unoptimized src="/moc-logo.webp" alt="Moc Productions" width={100} height={30} className="w-[120px] md:w-[150px] cursor-pointer" />
         </Link>
       </div>
 
@@ -326,8 +289,8 @@ const PricingPage = () => {
         >
           {/* Title slide */}
           <div className="h-full flex-shrink-0 flex items-center justify-center">
-            <h1 className="text-5xl font-bold text-black text-center">
-              Our Services<br />& Pricing
+            <h1 className="text-5xl font-bold text-black text-center" {...e('pricing_title')}>
+              <MultilineText text={t('pricing_title')} />
             </h1>
           </div>
 
@@ -337,10 +300,10 @@ const PricingPage = () => {
               key={pkg.id}
               className="h-full flex-shrink-0 relative flex items-center justify-center"
             >
-              <div className={`max-w-md p-8 rounded-xl shadow-lg bg-white ${pkg.popular ? 'ring-2 ring-black' : ''}`}>
+              <div className={`max-w-md p-8 rounded-xl shadow-lg bg-white ${pkg.popular ? 'ring-2 ring-black' : ''}`} {...e('pricing_packages')}>
                 {pkg.popular && (
                   <div className="absolute top-4 right-4 bg-black text-white px-3 py-1 text-sm rounded-full">
-                    Most Popular
+                    <span {...e('pricing_popular_badge')}>{t('pricing_popular_badge')}</span>
                   </div>
                 )}
                 <h2 className="text-3xl font-bold mb-2">{pkg.name}</h2>
@@ -370,8 +333,8 @@ const PricingPage = () => {
           {/* Options slide */}
           <div className="h-full flex-shrink-0 relative flex items-center justify-center">
             <div className="max-w-md p-8 rounded-xl shadow-lg bg-white">
-              <h2 className="text-3xl font-bold mb-6">Additional Options</h2>
-              <div className="space-y-4">
+              <h2 className="text-3xl font-bold mb-6" {...e('pricing_options_title')}>{t('pricing_options_title')}</h2>
+              <div className="space-y-4" {...e('pricing_options')}>
                 {options.map((option) => (
                   <div key={option.id} className="flex items-center justify-between">
                     <div>
@@ -398,7 +361,7 @@ const PricingPage = () => {
           {/* Total price slide */}
           <div className="h-full flex-shrink-0 relative flex items-center justify-center">
             <div className="max-w-md p-8 rounded-xl shadow-lg bg-white">
-              <h2 className="text-3xl font-bold mb-6">Your Custom Package</h2>
+              <h2 className="text-3xl font-bold mb-6" {...e('pricing_summary_title')}>{t('pricing_summary_title')}</h2>
               {selectedPackage ? (
                 <>
                   <div className="mb-6">
@@ -428,8 +391,8 @@ const PricingPage = () => {
                     </div>
                   </div>
 
-                  <button className="w-full py-3 mt-6 bg-black text-white rounded-lg font-medium">
-                    Request Booking
+                  <button className="w-full py-3 mt-6 bg-black text-white rounded-lg font-medium" {...e('pricing_booking_label')}>
+                    {t('pricing_booking_label')}
                   </button>
                 </>
               ) : (
@@ -449,8 +412,8 @@ const PricingPage = () => {
 
         {/* Mobile view - vertical scroll */}
         <div className="md:hidden pt-[100px] pb-20 px-4">
-          <h1 className="text-3xl font-bold text-black text-center mb-8">
-            Our Services & Pricing
+          <h1 className="text-3xl font-bold text-black text-center mb-8" {...e('pricing_title')}>
+            {t('pricing_title').replace(/\s*\n\s*/g, ' ')}
           </h1>
 
           {/* Packages for mobile */}
@@ -459,10 +422,11 @@ const PricingPage = () => {
               <div
                 key={pkg.id}
                 className={`p-6 rounded-xl shadow-lg bg-white relative ${pkg.popular ? 'ring-2 ring-black' : ''}`}
+                {...e('pricing_packages')}
               >
                 {pkg.popular && (
                   <div className="absolute top-4 right-4 bg-black text-white px-3 py-1 text-sm rounded-full">
-                    Most Popular
+                    <span {...e('pricing_popular_badge')}>{t('pricing_popular_badge')}</span>
                   </div>
                 )}
                 <h2 className="text-2xl font-bold mb-2">{pkg.name}</h2>
@@ -491,8 +455,8 @@ const PricingPage = () => {
 
           {/* Options for mobile */}
           <div className="p-6 rounded-xl shadow-lg bg-white mb-8">
-            <h2 className="text-2xl font-bold mb-6">Additional Options</h2>
-            <div className="space-y-4">
+            <h2 className="text-2xl font-bold mb-6" {...e('pricing_options_title')}>{t('pricing_options_title')}</h2>
+            <div className="space-y-4" {...e('pricing_options')}>
               {options.map((option) => (
                 <div key={option.id} className="flex items-center justify-between">
                   <div>
@@ -517,7 +481,7 @@ const PricingPage = () => {
 
           {/* Total for mobile */}
           <div className="p-6 rounded-xl shadow-lg bg-white mb-8">
-            <h2 className="text-2xl font-bold mb-6">Your Custom Package</h2>
+            <h2 className="text-2xl font-bold mb-6" {...e('pricing_summary_title')}>{t('pricing_summary_title')}</h2>
             {selectedPackage ? (
               <>
                 <div className="mb-6">
@@ -547,8 +511,8 @@ const PricingPage = () => {
                   </div>
                 </div>
 
-                <button className="w-full py-3 mt-6 bg-black text-white rounded-lg font-medium">
-                  Request Booking
+                <button className="w-full py-3 mt-6 bg-black text-white rounded-lg font-medium" {...e('pricing_booking_label')}>
+                  {t('pricing_booking_label')}
                 </button>
               </>
             ) : (

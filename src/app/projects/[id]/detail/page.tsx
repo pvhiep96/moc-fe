@@ -8,6 +8,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import MenuOverlay from '@/components/MenuOverlay';
 import DynamicMenuButton from '@/components/DynamicMenuButton';
+import VideoEmbed from '@/components/project/VideoEmbed';
+import { googleSrcSet, parseVideoSource, sizedImageUrl } from '@/utils/media';
 
 type Project = {
   id: number;
@@ -77,25 +79,6 @@ export default function ProjectDetail() {
   const prevImage = () => setLightboxIndex((prev) => (prev - 1 + project.all_images.length) % project.all_images.length);
   const nextImage = () => setLightboxIndex((prev) => (prev + 1) % project.all_images.length);
 
-  // VideoBlock giống trang projects/[id]
-  const VideoBlock = ({ embedUrl }: { embedUrl: string }) => (
-    <div className="w-full py-4 flex justify-center">
-      <div className="aspect-video w-full max-w-4xl">
-        <iframe
-          width="100%"
-          height="100%"
-          src={embedUrl}
-          title="YouTube video player"
-          style={{ border: 0 }}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerPolicy="strict-origin-when-cross-origin"
-          allowFullScreen
-          className="shadow-lg"
-        ></iframe>
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-white">
       {/* Menu Overlay */}
@@ -108,11 +91,12 @@ export default function ProjectDetail() {
       <div className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm py-4 flex justify-center items-center">
         <Link href="/">
           <Image
-            src="/moc_nguyen_production_black.png"
+            src="/moc-logo.webp"
+            unoptimized
             alt="Moc Productions"
             width={150}
-            height={50}
-            className="w-[120px] md:w-[150px] cursor-pointer"
+            height={79}
+            className="w-[120px] md:w-[150px] h-auto cursor-pointer"
             priority
           />
         </Link>
@@ -165,7 +149,12 @@ export default function ProjectDetail() {
           {project.all_images.map((image, idx) => (
             <div key={idx} className="relative aspect-[9/12] cursor-pointer group overflow-hidden project-card" onClick={() => openLightbox(idx)}>
               <img
-                src={image}
+                src={sizedImageUrl(image, 800)}
+                srcSet={googleSrcSet(image, [480, 800, 1200])}
+                sizes="(min-width: 768px) 33vw, 50vw"
+                loading={idx < 6 ? 'eager' : 'lazy'}
+                referrerPolicy="no-referrer"
+                decoding="async"
                 alt={`${project.name} - Image ${idx + 1}`}
                 className="object-cover w-full h-full project-image transition-transform duration-500 group-hover:scale-110"
               />
@@ -178,8 +167,15 @@ export default function ProjectDetail() {
         <>
           <div className="flex flex-col items-center gap-8 mb-8">
             {project.video_urls.map((video, idx) => {
-              const embedUrl = `https://www.youtube.com/embed/${video.url}`;
-              return <VideoBlock key={idx} embedUrl={embedUrl} />;
+              const source = parseVideoSource(video.url);
+              if (!source) return null;
+              return (
+                <div key={idx} className="w-full py-4 flex justify-center">
+                  <div className="aspect-video w-full max-w-4xl shadow-lg">
+                    <VideoEmbed source={source} title={`${project.name} video ${idx + 1}`} />
+                  </div>
+                </div>
+              );
             })}
           </div>
         </>
@@ -190,7 +186,10 @@ export default function ProjectDetail() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
           <button onClick={prevImage} className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-3xl">&#8592;</button>
           <img
-            src={project.all_images[lightboxIndex]}
+            src={sizedImageUrl(project.all_images[lightboxIndex], 2400)}
+            srcSet={googleSrcSet(project.all_images[lightboxIndex], [1080, 1600, 2400])}
+            sizes="100vw"
+            referrerPolicy="no-referrer"
             alt={`Ảnh ${lightboxIndex + 1}`}
             className="max-h-[100vh] max-w-[100vw] rounded shadow-lg"
             draggable={false}
